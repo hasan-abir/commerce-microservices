@@ -1,5 +1,6 @@
 from celery import shared_task
 from django.core.mail import send_mail
+from django.conf import settings
 
 @shared_task
 def sendmail_task(email_data):
@@ -10,7 +11,7 @@ def sendmail_task(email_data):
     return send_mail(
         subject,
         msg_content,
-        "hasan@test.com",
+        settings.DEFAULT_FROM_EMAIL,
         [recipient],
         fail_silently=False,
     )
