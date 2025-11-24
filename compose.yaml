@@ -12,6 +12,10 @@ services:
       - "8000:8000"
     environment:
       CELERY_BROKER_URL: redis://redis:6379
+      HOST: 0.0.0.0
+    volumes:
+      - .:/usr/local/app
+      - /usr/local/app/env
     depends_on:
       - redis
       - mailhog
