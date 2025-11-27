@@ -1,7 +1,7 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from dispatch_api.serializers import EmailDataSerializer
-from dispatch_api.tasks import sendmail_task
+from mail_dispatch_api.serializers import EmailDataSerializer
+from mail_dispatch_api.tasks import sendmail_task
 
 class DispatchAPIView(APIView):
     def post(self, request, format=None):

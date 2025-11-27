@@ -1,6 +1,6 @@
 from django.test import TestCase, Client, override_settings
-from dispatch_api.serializers import EmailDataSerializer
-from dispatch_api.services import sendmail_service
+from mail_dispatch_api.serializers import EmailDataSerializer
+from mail_dispatch_api.services import sendmail_service
 from unittest.mock import patch
 from django.conf import settings
 
@@ -58,7 +58,7 @@ class EmailSerializerTestCase(TestCase):
 class DispatchAPITestCase(TestCase):
     def setUp(self):
         self.client = Client()
-    @patch("dispatch_api.views.sendmail_task")
+    @patch("mail_dispatch_api.views.sendmail_task")
     def test_post(self, mock_task):
         response = self.client.post('/')
         self.assertEqual(response.status_code, 400)
@@ -76,7 +76,7 @@ class DispatchAPITestCase(TestCase):
         self.assertEqual(response.json()['msg'], "Success! We've accepted your email request and are dispatching the message now.")
 
 class ServiceTestCase(TestCase):
-    @patch("dispatch_api.services.send_mail")
+    @patch("mail_dispatch_api.services.send_mail")
     def test_sendmail_service(self, mock_send_mail):
         data = {
             "recipient": "test@test.com",

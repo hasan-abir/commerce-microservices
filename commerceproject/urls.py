@@ -1,5 +1,5 @@
 """
-URL configuration for sendmailproject project.
+URL configuration for commerceproject project.
 
 The `urlpatterns` list routes URLs to views. For more information please see:
     https://docs.djangoproject.com/en/5.2/topics/http/urls/
@@ -16,7 +16,7 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
-from dispatch_api.views import DispatchAPIView
+from mail_dispatch_api.views import DispatchAPIView
 from drf_spectacular.views import SpectacularAPIView, SpectacularRedocView, SpectacularSwaggerView
 
 urlpatterns = [

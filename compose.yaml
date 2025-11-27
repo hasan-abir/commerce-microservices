@@ -21,7 +21,7 @@ services:
       - mailhog
   worker:
     build: .
-    command: celery -A sendmailproject worker -l INFO
+    command: celery -A commerceproject worker -l INFO
     environment:
       CELERY_BROKER_URL: redis://redis:6379
       EMAIL_HOST: ${EMAIL_HOST}

@@ -1,4 +1,6 @@
-# Send Mail Microservice
+# Commerce Microservices
+
+## Send Mail Microservice
 
 Tells the API to send the mail to the worker. And the worker gets the job done whenever it feels like it (almost the next instance, in a queue). And so, a 100 emails sent at once won't cause the endpoint any headache whatsoever, a 100 or a 1000.
 
