@@ -10,7 +10,7 @@ class Product(models.Model):
         return self.name
 
 class Cart(models.Model):
-    session_key = models.CharField(max_length=50)
+    session_key = models.CharField(max_length=50, unique=True)
 
     def __str__(self):
         return f"User: {self.session_key}"

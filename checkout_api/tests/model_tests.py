@@ -54,3 +54,4 @@ class CartItemTestCase(TestCase):
         cartItem = CartItem.objects.get(quantity=self.cartItem.quantity)
 
         self.assertEqual(cartItem.__str__(), f"Belongs to cart: {self.cartItem.cart.session_key}")
+
