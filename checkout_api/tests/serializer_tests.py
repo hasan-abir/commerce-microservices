@@ -118,7 +118,7 @@ class CartItemSerializerTestCase(TestCase):
         self.assertEqual(len(serializer.errors), 3)
         self.assertEqual(str(errors['quantity'][0]), "Ensure this value is greater than or equal to 1.")
 
-        # Successful validation
+        # Successful validation - TODO
         data = {
             "quantity": 1,
             "product": self.product,
