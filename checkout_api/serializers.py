@@ -9,11 +9,32 @@ class ProductSerializer(serializers.HyperlinkedModelSerializer):
         model = Product
         fields = ['url', 'id', 'name', 'price', 'stock', 'is_active']
 
-class CartSerializer(serializers.HyperlinkedModelSerializer):
+class CartSerializer(serializers.ModelSerializer):
     session_key = serializers.CharField(validators=[validators.UniqueValidator(queryset=Cart.objects.all(), message="Cart with this session key already exists.")])
+    total = serializers.SerializerMethodField()
+    subtotal = serializers.SerializerMethodField()
     class Meta:
         model = Cart
-        fields = ['id', 'session_key']
+        fields = ['id', 'session_key', 'total', 'subtotal']
+
+    def get_subtotal(self, obj):
+        cart_subtotal = 0
+
+        cartItems = CartItem.objects.filter(cart=obj)
+
+        for cartItem in cartItems:
+            cart_subtotal += cartItem.product.price * cartItem.quantity
+
+        return cart_subtotal.quantize(Decimal("0.01"), rounding=ROUND_CEILING)
+    
+    def get_total(self, obj):
+        tax_rate = Decimal("0.08")
+        cart_subtotal = self.get_subtotal(obj)
+
+        cart_total = cart_subtotal + cart_subtotal * tax_rate
+
+        return cart_total.quantize(Decimal("0.01"), rounding=ROUND_CEILING)
+    
 
 class CartItemSerializer(serializers.HyperlinkedModelSerializer):
     quantity = serializers.IntegerField(min_value=1)

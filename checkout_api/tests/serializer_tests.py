@@ -1,6 +1,7 @@
 from django.test import TestCase
 from checkout_api.models import Product, Cart, CartItem
 from checkout_api.serializers import ProductSerializer, CartSerializer, CartItemSerializer
+from decimal import *
 
 class ProductSerializerTestCase(TestCase):
     def setUp(self):
@@ -59,6 +60,13 @@ class ProductSerializerTestCase(TestCase):
 class CartSerializerTestCase(TestCase):
     def setUp(self):
         self.cart = Cart.objects.create(session_key="123")
+
+        self.product1 = Product.objects.create(name="Test Product 1", price=22.45, stock=8, is_active=True)
+        self.product2 = Product.objects.create(name="Test Product 2", price=22.45, stock=2, 
+        is_active=True)
+        self.cartItem1 = CartItem.objects.create(cart=self.cart, product=self.product1, quantity=2)
+        self.cartItem2 = CartItem.objects.create(cart=self.cart, product=self.product1, quantity=3)
+
     def test_instance_validation(self):
         # Null validation
         serializer = CartSerializer(data={})
@@ -91,6 +99,12 @@ class CartSerializerTestCase(TestCase):
         }
         serializer = CartSerializer(data=data)
         self.assertTrue(serializer.is_valid())
+
+        serializer = CartSerializer(self.cart)
+        self.assertTrue(serializer.data['id'])
+        self.assertTrue(serializer.data['session_key'], data['session_key'])
+        self.assertTrue(serializer.data['total'], Decimal('121.23'))
+        self.assertTrue(serializer.data['subtotal'], Decimal('112.25'))
 
 class CartItemSerializerTestCase(TestCase):
     def setUp(self):
