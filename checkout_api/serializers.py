@@ -25,6 +25,8 @@ class CartSerializer(serializers.ModelSerializer):
         for cartItem in cartItems:
             cart_subtotal += cartItem.product.price * cartItem.quantity
 
+        cart_subtotal = Decimal(cart_subtotal)
+
         return cart_subtotal.quantize(Decimal("0.01"), rounding=ROUND_CEILING)
     
     def get_total(self, obj):
@@ -33,11 +35,14 @@ class CartSerializer(serializers.ModelSerializer):
 
         cart_total = cart_subtotal + cart_subtotal * tax_rate
 
+        cart_total = Decimal(cart_total)
+
         return cart_total.quantize(Decimal("0.01"), rounding=ROUND_CEILING)
     
 
 class CartItemSerializer(serializers.HyperlinkedModelSerializer):
     quantity = serializers.IntegerField(min_value=1)
+    cart = serializers.PrimaryKeyRelatedField(queryset=Cart.objects.all())
     class Meta:
         model = CartItem
         fields = ['url', 'id', 'cart', 'product', 'quantity']

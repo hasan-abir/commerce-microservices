@@ -2,6 +2,8 @@ from django.test import TestCase
 from checkout_api.models import Product, Cart, CartItem
 from checkout_api.serializers import ProductSerializer, CartSerializer, CartItemSerializer
 from decimal import *
+from django.urls import reverse
+from django.test.client import RequestFactory
 
 class ProductSerializerTestCase(TestCase):
     def setUp(self):
@@ -108,6 +110,8 @@ class CartSerializerTestCase(TestCase):
 
 class CartItemSerializerTestCase(TestCase):
     def setUp(self):
+        self.factory = RequestFactory()
+
         self.product = Product.objects.create(name="Test Product", price=22.45, stock=8, is_active=True)
         self.cart = Cart.objects.create(session_key="123")
         self.cartItem = CartItem.objects.create(cart=self.cart, product=self.product, quantity=4)
@@ -133,11 +137,13 @@ class CartItemSerializerTestCase(TestCase):
         self.assertEqual(str(errors['quantity'][0]), "Ensure this value is greater than or equal to 1.")
 
         # Successful validation - TODO
+        product = reverse('product-detail', kwargs={'pk': self.product.pk})
         data = {
             "quantity": 1,
-            "product": self.product,
-            "cart": self.cart
+            "product": product,
+            "cart": self.cart.pk
         }
-        serializer = CartItemSerializer(data=data)
+        mock_request = self.factory.get('/api/cartitems/')
 
-        # self.assertTrue(serializer.is_valid())
+        serializer = CartItemSerializer(data=data, context={'request': mock_request})
+        self.assertTrue(serializer.is_valid())
