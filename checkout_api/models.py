@@ -20,5 +20,9 @@ class CartItem(models.Model):
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
     quantity = models.IntegerField()
 
+    class Meta:
+        ordering = ['-quantity']
+
     def __str__(self):
         return f"Belongs to cart: {self.cart.session_key}"
+    

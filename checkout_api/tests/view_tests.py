@@ -20,8 +20,19 @@ class ProductViewTestCase(TestCase):
 class CartViewTestCase(TestCase):
     def setUp(self):
         self.client = Client()
+    def test_list(self):
+        response = self.client.get(f'/api/carts/')
+
+        self.assertTrue(response.status_code, 200)
+
+        self.assertEqual(response.json()['id'], 1)
+        self.assertTrue(response.json()['session_key'])
+        self.assertEqual(response.json()['total'], Decimal(0.0))
+        self.assertEqual(response.json()['subtotal'], Decimal(0.0))
     def test_retrieve(self):
         response = self.client.get(f'/api/carts/')
+
+        response = self.client.get(f'/api/carts/{response.json()['id']}/')
 
         self.assertTrue(response.status_code, 200)
 
@@ -46,8 +57,8 @@ class CartItemViewSetTestCase(TestCase):
         response = self.client.get('/api/cartitems/')
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()['count'], 2)
-        self.assertEqual(response.json()['results'][0]['cart'], self.cartItem1.cart.pk)
-        self.assertEqual(response.json()['results'][1]['cart'], self.cartItem2.cart.pk)
+        self.assertEqual(response.json()['results'][0]['cart'], f'http://testserver/api/carts/{self.cartItem1.cart.pk}/')
+        self.assertEqual(response.json()['results'][1]['cart'], f'http://testserver/api/carts/{self.cartItem2.cart.pk}/')
 
     # def test_get_detail(self):
     #     url = f'/api/cart-items/{self.firstPost.pk}/'

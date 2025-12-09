@@ -15,7 +15,7 @@ class CartSerializer(serializers.ModelSerializer):
     subtotal = serializers.SerializerMethodField()
     class Meta:
         model = Cart
-        fields = ['id', 'session_key', 'total', 'subtotal']
+        fields = ['url', 'id', 'session_key', 'total', 'subtotal']
 
     def get_subtotal(self, obj):
         cart_subtotal = 0
@@ -42,7 +42,6 @@ class CartSerializer(serializers.ModelSerializer):
 
 class CartItemSerializer(serializers.HyperlinkedModelSerializer):
     quantity = serializers.IntegerField(min_value=1)
-    cart = serializers.PrimaryKeyRelatedField(queryset=Cart.objects.all())
     class Meta:
         model = CartItem
         fields = ['url', 'id', 'cart', 'product', 'quantity']

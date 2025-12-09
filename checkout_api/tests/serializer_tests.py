@@ -61,6 +61,7 @@ class ProductSerializerTestCase(TestCase):
 
 class CartSerializerTestCase(TestCase):
     def setUp(self):
+        self.factory = RequestFactory()
         self.cart = Cart.objects.create(session_key="123")
 
         self.product1 = Product.objects.create(name="Test Product 1", price=22.45, stock=8, is_active=True)
@@ -102,7 +103,8 @@ class CartSerializerTestCase(TestCase):
         serializer = CartSerializer(data=data)
         self.assertTrue(serializer.is_valid())
 
-        serializer = CartSerializer(self.cart)
+        mock_request = self.factory.get('/api/cart/')
+        serializer = CartSerializer(self.cart, context={'request': mock_request})
         self.assertTrue(serializer.data['id'])
         self.assertTrue(serializer.data['session_key'], data['session_key'])
         self.assertTrue(serializer.data['total'], Decimal('121.23'))
@@ -136,14 +138,23 @@ class CartItemSerializerTestCase(TestCase):
         self.assertEqual(len(serializer.errors), 3)
         self.assertEqual(str(errors['quantity'][0]), "Ensure this value is greater than or equal to 1.")
 
-        # Successful validation - TODO
+        # Success
         product = reverse('product-detail', kwargs={'pk': self.product.pk})
+        cart = reverse('cart-detail', kwargs={'pk': self.cart.pk})
         data = {
             "quantity": 1,
             "product": product,
-            "cart": self.cart.pk
+            "cart": cart
         }
         mock_request = self.factory.get('/api/cartitems/')
 
         serializer = CartItemSerializer(data=data, context={'request': mock_request})
         self.assertTrue(serializer.is_valid())
+        saved_instance = serializer.save()
+
+        serializer = CartItemSerializer(instance=saved_instance, context={'request': mock_request})
+        self.assertTrue(serializer.data['url'])
+        self.assertTrue(serializer.data['id'])
+        self.assertTrue(serializer.data['cart'], data['cart'])
+        self.assertTrue(serializer.data['product'], data['product'])
+        self.assertTrue(serializer.data['quantity'], data['quantity'])

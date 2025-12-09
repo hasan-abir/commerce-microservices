@@ -18,9 +18,6 @@ class ProductViewSet(viewsets.ViewSet):
     
 class CartViewSet(viewsets.ViewSet):
     def list(self, request):
-        resolver = get_resolver() 
-        named_urls = [name for name in resolver.reverse_dict.keys() if isinstance(name, str)]
-
         if not request.session.session_key:
             request.session.save()
         
@@ -29,6 +26,13 @@ class CartViewSet(viewsets.ViewSet):
         cart, created = Cart.objects.get_or_create(session_key=session_key)
 
         serializer = CartSerializer(cart, context={'request': request})
+
+        return Response(serializer.data, status=200)
+    
+    def retrieve(self, request, pk):
+        queryset = Cart.objects.get(pk=pk)
+
+        serializer = CartSerializer(queryset, context={'request': request})
 
         return Response(serializer.data, status=200)
 
