@@ -27,10 +27,10 @@ router.register(r'carts', CartViewSet, basename='cart')
 router.register(r'cartitems', CartItemViewSet, basename='cartitem')
 
 urlpatterns = [
+    path('', SpectacularSwaggerView.as_view(url_name='schema'), name='swagger-ui'),
     path('api/', include(router.urls)),
     path('api/sendmail/', view=DispatchAPIView.as_view(), name='sendmail'),
     path('api/schema/', SpectacularAPIView.as_view(), name='schema'),
-    path('api/schema/swagger-ui/', SpectacularSwaggerView.as_view(url_name='schema'), name='swagger-ui'),
     path('api/schema/redoc/', SpectacularRedocView.as_view(url_name='schema'), name='redoc'),
     path('admin/', admin.site.urls),
 ]

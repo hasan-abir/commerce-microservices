@@ -2,6 +2,7 @@ from django.test import TestCase, Client
 from checkout_api.models import Product, Cart, CartItem
 from checkout_api.serializers import ProductSerializer, CartSerializer, CartItemSerializer
 from decimal import *
+from django.urls import reverse
 
 class ProductViewTestCase(TestCase):
     def setUp(self):
@@ -60,91 +61,71 @@ class CartItemViewSetTestCase(TestCase):
         self.assertEqual(response.json()['results'][0]['cart'], f'http://testserver/api/carts/{self.cartItem1.cart.pk}/')
         self.assertEqual(response.json()['results'][1]['cart'], f'http://testserver/api/carts/{self.cartItem2.cart.pk}/')
 
-    # def test_get_detail(self):
-    #     url = f'/api/cart-items/{self.firstPost.pk}/'
+    def test_get_detail(self):
+        url = f'/api/cartitems/{self.cartItem1.pk}/'
 
-    #     response = self.client.get('/api/cart-items/123/')
-    #     self.assertEqual(response.status_code, 404)
+        response = self.client.get('/api/cartitems/123/')
+        self.assertEqual(response.status_code, 404)
 
-    #     response = self.client.get(url)
-    #     self.assertEqual(response.status_code, 200)
-    #     self.assertEqual(response.json()['title'], self.firstPost.title)
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()['product'], f'http://testserver/api/products/{self.cartItem1.product.pk}/')
 
-    # def test_post(self):
-    #     response = self.client.post('/api/cart-items/')
-    #     self.assertEqual(response.status_code, 401)
+    def test_post(self):
+        response = self.client.post('/api/cartitems/')
+        self.assertEqual(response.status_code, 400)
 
-    #     self.login()
+        product = reverse('product-detail', kwargs={'pk': self.product1.pk})
+        cart = reverse('cart-detail', kwargs={'pk': self.cart1.pk})
+        data = {
+            "quantity": 1,
+            "product": product,
+            "cart": cart
+        }
 
-    #     data = {"title": "New post", "content": "New post content", "published_date": "2025-10-04"}
+        response = self.client.post('/api/cartitems/', data=data)
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(response.json()['product'], f'http://testserver/api/products/{self.cartItem1.product.pk}/')
 
-    #     response = self.client.post('/api/cart-items/', data=data, headers=self.tokenHeader)
-    #     self.assertEqual(response.json()['title'], data["title"])
-    #     self.assertTrue(response.json()['author'])
-    #     self.assertEqual(response.status_code, 201)
+    def test_put(self):
+        url = f'/api/cartitems/{self.cartItem1.pk}/'
 
-    # def test_put(self):
-    #     url = f'/api/cart-items/{self.firstPost.pk}/'
+        response = self.client.put(url)
+        self.assertEqual(response.status_code, 400)
 
-    #     response = self.client.put(url)
-    #     self.assertEqual(response.status_code, 401)
+        response = self.client.put('/api/cartitems/123/')
+        self.assertEqual(response.status_code, 404)
 
-    #     self.login(unauth=True)
+        product = reverse('product-detail', kwargs={'pk': self.product1.pk})
+        cart = reverse('cart-detail', kwargs={'pk': self.cart1.pk})
+        data = {
+            "quantity": 1,
+            "product": product,
+            "cart": cart
+        }
 
-    #     response = self.client.put('/api/cart-items/123/', headers=self.tokenHeader)
-    #     self.assertEqual(response.status_code, 404)
+        response = self.client.put(url, data=data, content_type="application/json")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()['product'], f'http://testserver/api/products/{self.cartItem1.product.pk}/')
 
-    #     data = {"title": "New post", "content": "New post content", "published_date": "2025-10-04"}
+    def test_patch(self):
+        url = f'/api/cartitems/{self.cartItem1.pk}/'
 
-    #     response = self.client.put(url, data=data, content_type="application/json", headers=self.tokenHeader)
-    #     self.assertEqual(response.status_code, 403)
+        response = self.client.patch('/api/cartitems/123/')
+        self.assertEqual(response.status_code, 404)
 
-    #     self.login()
+        data = {"quantity": 2}
 
-    #     response = self.client.put(url, data=data, content_type="application/json", headers=self.tokenHeader)
-    #     self.assertEqual(response.status_code, 200)
-    #     self.assertEqual(response.json()['title'], data["title"])
-    #     self.assertTrue(response.json()['author'])
-
-    # def test_patch(self):
-    #     url = f'/api/cart-items/{self.firstPost.pk}/'
-
-    #     response = self.client.patch(url)
-    #     self.assertEqual(response.status_code, 401)
-
-    #     self.login(unauth=True)
-
-    #     response = self.client.patch('/api/cart-items/123/', headers=self.tokenHeader)
-    #     self.assertEqual(response.status_code, 404)
-
-    #     data = {"title": "New post"}
-
-    #     response = self.client.patch(url, data=data, content_type="application/json", headers=self.tokenHeader)
-    #     self.assertEqual(response.status_code, 403)
-
-    #     self.login()
-
-    #     response = self.client.patch(url, data=data, content_type="application/json", headers=self.tokenHeader)
-    #     self.assertEqual(response.status_code, 200)
-    #     self.assertEqual(response.json()['title'], data["title"])
-    #     self.assertTrue(response.json()['author'])
+        response = self.client.patch(url, data=data, content_type="application/json")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()['quantity'], data["quantity"])
         
-    # def test_delete(self):
-    #     url = f'/api/cart-items/{self.firstPost.pk}/'
+    def test_delete(self):
+        url = f'/api/cartitems/{self.cartItem1.pk}/'
 
-    #     response = self.client.delete(url)
-    #     self.assertEqual(response.status_code, 401)
+        response = self.client.delete('/api/cartitems/123/')
+        self.assertEqual(response.status_code, 404)
 
-    #     self.login(unauth=True)
-
-    #     response = self.client.delete('/api/cart-items/123/', headers=self.tokenHeader)
-    #     self.assertEqual(response.status_code, 404)
-
-    #     response = self.client.delete(url, headers=self.tokenHeader)
-    #     self.assertEqual(response.status_code, 403)
-
-    #     self.login()
-
-    #     response = self.client.delete(url, headers=self.tokenHeader)
-    #     self.assertEqual(response.status_code, 204)        
+        response = self.client.delete(url)
+        self.assertEqual(response.status_code, 204)        
 

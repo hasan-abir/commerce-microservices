@@ -50,7 +50,7 @@ REST_FRAMEWORK = {
 }
 
 SPECTACULAR_SETTINGS = {
-    'TITLE': 'Send Mail Microservice',
+    'TITLE': 'Microservices',
     'DESCRIPTION': '',
     'VERSION': '1.0.0',
     'SERVE_INCLUDE_SCHEMA': False,
