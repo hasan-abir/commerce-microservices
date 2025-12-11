@@ -1,5 +1,5 @@
 from rest_framework import serializers, validators
-from checkout_api.models import Product, Cart, CartItem
+from checkout_api.models import Product, Cart, CartItem, Order, OrderItem
 from decimal import *
 
 class ProductSerializer(serializers.HyperlinkedModelSerializer):
@@ -7,7 +7,7 @@ class ProductSerializer(serializers.HyperlinkedModelSerializer):
     stock = serializers.IntegerField(min_value=1)
     class Meta:
         model = Product
-        fields = ['url', 'id', 'name', 'price', 'stock', 'is_active']
+        fields = '__all__'
 
 class CartSerializer(serializers.ModelSerializer):
     session_key = serializers.CharField(validators=[validators.UniqueValidator(queryset=Cart.objects.all(), message="Cart with this session key already exists.")])
@@ -15,7 +15,7 @@ class CartSerializer(serializers.ModelSerializer):
     subtotal = serializers.SerializerMethodField()
     class Meta:
         model = Cart
-        fields = ['url', 'id', 'session_key', 'total', 'subtotal']
+        fields = '__all__'
 
     def get_subtotal(self, obj):
         cart_subtotal = 0
@@ -44,4 +44,15 @@ class CartItemSerializer(serializers.HyperlinkedModelSerializer):
     quantity = serializers.IntegerField(min_value=1)
     class Meta:
         model = CartItem
-        fields = ['url', 'id', 'cart', 'product', 'quantity']
+        fields = '__all__'
+
+class OrderSerializer(serializers.HyperlinkedModelSerializer):
+    class Meta:
+        model = Order
+        fields = '__all__'
+        exclude = 'order_number'
+
+class OrderItemSerializer(serializers.HyperlinkedModelSerializer):
+    class Meta:
+        model = OrderItem
+        fields = '__all__'
