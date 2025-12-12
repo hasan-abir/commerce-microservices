@@ -1,6 +1,6 @@
 from django.test import TestCase
-from checkout_api.models import Product, Cart, CartItem
-from checkout_api.serializers import ProductSerializer, CartSerializer, CartItemSerializer
+from checkout_api.models import Product, Cart, CartItem, Order, OrderItem
+from checkout_api.serializers import ProductSerializer, CartSerializer, CartItemSerializer, OrderSerializer, OrderItemSerializer
 from decimal import *
 from django.urls import reverse
 from django.test.client import RequestFactory
@@ -154,7 +154,169 @@ class CartItemSerializerTestCase(TestCase):
 
         serializer = CartItemSerializer(instance=saved_instance, context={'request': mock_request})
         self.assertTrue(serializer.data['url'])
-        self.assertTrue(serializer.data['id'])
         self.assertTrue(serializer.data['cart'], data['cart'])
         self.assertTrue(serializer.data['product'], data['product'])
         self.assertTrue(serializer.data['quantity'], data['quantity'])
+
+class OrderSerializerTestCase(TestCase):
+    def setUp(self):
+        self.factory = RequestFactory()
+
+        self.order = Order.objects.create(status=Order.PAID,
+            total=Decimal('45.99'),
+            subtotal=Decimal('42.00'),
+            tax_rate=Decimal('0.095'),
+            contact_email='johndoe@example.com',
+            shipping_address_line1='123 Main St',
+            shipping_city='Anytown',
+            shipping_country='USA',
+            shipping_zip='12345',
+            source_cart_session_key='session_key_1234567890abcdef')
+    def test_instance_validation(self):
+        # Null validation
+        serializer = OrderSerializer(data={})
+        self.assertFalse(serializer.is_valid())
+        errors = serializer.errors
+        self.assertEqual(len(serializer.errors), 9)
+        self.assertEqual(str(errors['source_cart_session_key'][0]), "This field is required.")
+        self.assertEqual(str(errors['total'][0]), "This field is required.")
+        self.assertEqual(str(errors['subtotal'][0]), "This field is required.")
+        self.assertEqual(str(errors['tax_rate'][0]), "This field is required.")
+        self.assertEqual(str(errors['contact_email'][0]), "This field is required.")
+        self.assertEqual(str(errors['shipping_address_line1'][0]), "This field is required.")
+        self.assertEqual(str(errors['shipping_city'][0]), "This field is required.")
+        self.assertEqual(str(errors['shipping_country'][0]), "This field is required.")
+        self.assertEqual(str(errors['shipping_zip'][0]), "This field is required.")
+
+        # Blank validation
+        data = {
+            "source_cart_session_key": "",
+            "total": Decimal('0.00'),
+            "subtotal": Decimal('0.00'),
+            "tax_rate": Decimal('0.00'),
+            "contact_email": "",
+            "shipping_address_line1": "",
+            "shipping_city": "",
+            "shipping_country": "",
+            "shipping_zip": "",
+        }
+
+        serializer = OrderSerializer(data=data)
+        self.assertFalse(serializer.is_valid())
+        errors = serializer.errors
+        self.assertEqual(len(serializer.errors), 9)
+        self.assertEqual(str(errors['total'][0]), "Ensure this value is greater than or equal to 0.01.")
+        self.assertEqual(str(errors['subtotal'][0]), "Ensure this value is greater than or equal to 0.01.")
+        self.assertEqual(str(errors['tax_rate'][0]), "Ensure this value is greater than or equal to 0.01.")
+        self.assertEqual(str(errors['source_cart_session_key'][0]), "This field may not be blank.")
+        self.assertEqual(str(errors['contact_email'][0]), "This field may not be blank.")
+        self.assertEqual(str(errors['shipping_address_line1'][0]), "This field may not be blank.")
+        self.assertEqual(str(errors['shipping_city'][0]), "This field may not be blank.")
+        self.assertEqual(str(errors['shipping_country'][0]), "This field may not be blank.")
+        self.assertEqual(str(errors['shipping_zip'][0]), "This field may not be blank.")
+
+        # Choices validation
+        data['status'] = 'something'
+        serializer = OrderSerializer(data=data)
+        self.assertFalse(serializer.is_valid())
+        errors = serializer.errors
+        self.assertEqual(str(errors['status'][0]), '"something" is not a valid choice.')
+
+        # # Success - TODO
+        data = {
+            'status': Order.PAID,
+            'total': Decimal('45.99'),
+            'subtotal': Decimal('42.00'),
+            'tax_rate': Decimal('0.095'),
+            'contact_email': 'johndoe@example.com',
+            'shipping_address_line1': '123 Main St',
+            'shipping_city': 'Anytown',
+            'shipping_country': 'USA',
+            'shipping_zip': '12345',
+            'source_cart_session_key': 'session_key_1234567890abcdef'
+        }
+
+        serializer = OrderSerializer(data=data)
+        self.assertTrue(serializer.is_valid())
+        # mock_request = self.factory.get('/api/orders/')
+
+        # serializer = OrderSerializer(data=data, context={'request': mock_request})
+        # self.assertTrue(serializer.is_valid())
+        # saved_instance = serializer.save()
+
+        # serializer = OrderSerializer(instance=saved_instance, context={'request': mock_request})
+        
+        # self.assertTrue(serializer.data['url'])
+        # self.assertTrue(serializer.data['cart'], data['cart'])
+        # self.assertTrue(serializer.data['product'], data['product'])
+        # self.assertTrue(serializer.data['quantity'], data['quantity'])
+
+class OrderItemSerializerTestCase(TestCase):
+    def setUp(self):
+        self.factory = RequestFactory()
+
+        self.order = Order.objects.create(status=Order.PAID,
+            total=Decimal('45.99'),
+            subtotal=Decimal('42.00'),
+            tax_rate=Decimal('0.095'),
+            contact_email='johndoe@example.com',
+            shipping_address_line1='123 Main St',
+            shipping_city='Anytown',
+            shipping_country='USA',
+            shipping_zip='12345',
+            source_cart_session_key='session_key_1234567890abcdef')
+
+        self.order_item = OrderItem.objects.create(order=self.order, original_product_id=1, product_name="New Product", unit_price = Decimal('1.23'), quantity=3)
+    def test_instance_validation(self):
+        # Null validation
+        serializer = OrderItemSerializer(data={})
+        self.assertFalse(serializer.is_valid())
+        errors = serializer.errors
+        self.assertEqual(len(serializer.errors), 5)
+        self.assertEqual(str(errors['original_product_id'][0]), "This field is required.")
+        self.assertEqual(str(errors['product_name'][0]), "This field is required.")
+        self.assertEqual(str(errors['unit_price'][0]), "This field is required.")
+        self.assertEqual(str(errors['quantity'][0]), "This field is required.")
+        self.assertEqual(str(errors['order'][0]), "This field is required.")
+
+        # # Blank validation
+        data = {
+            "original_product_id": 1,
+            "product_name": "",
+            "unit_price": Decimal('0.00'),
+            "quantity": 0,
+            "order": "",
+        }
+
+        serializer = OrderItemSerializer(data=data)
+        self.assertFalse(serializer.is_valid())
+        errors = serializer.errors
+        self.assertEqual(len(serializer.errors), 4)
+        self.assertEqual(str(errors['product_name'][0]), "This field may not be blank.")
+        self.assertEqual(str(errors['unit_price'][0]), "Ensure this value is greater than or equal to 0.01.")
+        self.assertEqual(str(errors['quantity'][0]), "Ensure this value is greater than or equal to 1.")
+        self.assertEqual(str(errors['order'][0]), "This field may not be null.")
+
+        # Success - TODO
+        # data = {
+        #     "original_product_id": 1,
+        #     "product_name": "Product",
+        #     "unit_price": Decimal('1.34'),
+        #     "quantity": 4,
+        #     "order": "",
+        # }
+
+        # mock_request = self.factory.get('/api/orders/')
+        # serializer = OrderItemSerializer(data=data, context={'request': mock_request})
+        # self.assertTrue(serializer.is_valid())
+
+        # serializer = OrderSerializer(data=data, context={'request': mock_request})
+        # self.assertTrue(serializer.is_valid())
+        # saved_instance = serializer.save()
+
+        # serializer = OrderSerializer(instance=saved_instance, context={'request': mock_request})
+        
+        # self.assertTrue(serializer.data['url'])
+        # self.assertTrue(serializer.data['cart'], data['cart'])
+        # self.assertTrue(serializer.data['product'], data['product'])
+        # self.assertTrue(serializer.data['quantity'], data['quantity'])

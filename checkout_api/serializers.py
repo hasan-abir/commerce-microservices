@@ -3,7 +3,7 @@ from checkout_api.models import Product, Cart, CartItem, Order, OrderItem
 from decimal import *
 
 class ProductSerializer(serializers.HyperlinkedModelSerializer):
-    price = serializers.DecimalField(max_digits=10, decimal_places=2, min_value=round(Decimal(0.01), 2))
+    price = serializers.DecimalField(max_digits=10, decimal_places=2, min_value=round(Decimal('0.01'), 2))
     stock = serializers.IntegerField(min_value=1)
     class Meta:
         model = Product
@@ -47,12 +47,17 @@ class CartItemSerializer(serializers.HyperlinkedModelSerializer):
         fields = '__all__'
 
 class OrderSerializer(serializers.HyperlinkedModelSerializer):
+    order_number = serializers.CharField(read_only=True)
+    total = serializers.DecimalField(max_digits=10, decimal_places=2, min_value=Decimal('0.01'))
+    subtotal = serializers.DecimalField(max_digits=10, decimal_places=2, min_value=Decimal('0.01'))
+    tax_rate = serializers.DecimalField(max_digits=5, decimal_places=3, min_value=Decimal('0.01'))
     class Meta:
         model = Order
         fields = '__all__'
-        exclude = 'order_number'
 
 class OrderItemSerializer(serializers.HyperlinkedModelSerializer):
+    unit_price = serializers.DecimalField(max_digits=10, decimal_places=2, min_value=round(Decimal('0.01'), 2))
+    quantity = serializers.IntegerField(min_value=1)
     class Meta:
         model = OrderItem
         fields = '__all__'
