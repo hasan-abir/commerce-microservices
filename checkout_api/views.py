@@ -2,9 +2,8 @@ from django.shortcuts import render
 from rest_framework import viewsets
 from rest_framework.response import Response
 from django.shortcuts import get_object_or_404
-from checkout_api.serializers import CartSerializer, CartItemSerializer, ProductSerializer
-from checkout_api.models import Cart, Product, CartItem
-from django.urls import get_resolver
+from checkout_api.serializers import CartSerializer, CartItemSerializer, ProductSerializer, OrderSerializer, OrderItemSerializer
+from checkout_api.models import Cart, Product, CartItem, Order, OrderItem
 
 class ProductViewSet(viewsets.ViewSet):
     def retrieve(self, request, pk):
@@ -30,12 +29,33 @@ class CartViewSet(viewsets.ViewSet):
         return Response(serializer.data, status=200)
     
     def retrieve(self, request, pk):
-        queryset = Cart.objects.get(pk=pk)
+        queryset = Cart.objects.all()
+        cart_item = get_object_or_404(queryset, pk=pk)
 
-        serializer = CartSerializer(queryset, context={'request': request})
+        serializer = CartSerializer(cart_item, context={'request': request})
 
         return Response(serializer.data, status=200)
 
 class CartItemViewSet(viewsets.ModelViewSet):
     queryset = CartItem.objects.all()
     serializer_class = CartItemSerializer
+
+class OrderViewSet(viewsets.ViewSet):
+        def retrieve(self, request, pk):
+            queryset = Order.objects.all()
+
+            order = get_object_or_404(queryset, pk=pk)
+
+            serializer = OrderSerializer(order, context={'request': request})
+
+            return Response(serializer.data, status=200)
+        
+class OrderItemViewSet(viewsets.ViewSet):
+        def retrieve(self, request, pk):
+            queryset = OrderItem.objects.all()
+
+            order_item = get_object_or_404(queryset, pk=pk)
+
+            serializer = OrderItemSerializer(order_item, context={'request': request})
+
+            return Response(serializer.data, status=200)

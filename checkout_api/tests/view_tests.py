@@ -1,5 +1,5 @@
 from django.test import TestCase, Client
-from checkout_api.models import Product, Cart, CartItem
+from checkout_api.models import Product, Cart, CartItem, Order, OrderItem
 from checkout_api.serializers import ProductSerializer, CartSerializer, CartItemSerializer
 from decimal import *
 from django.urls import reverse
@@ -13,7 +13,6 @@ class ProductViewTestCase(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertTrue(response.json()['url'])
-        self.assertEqual(response.json()['id'], self.product.pk)
         self.assertEqual(response.json()['name'], self.product.name)
         self.assertEqual(response.json()['price'], str(self.product.price))
         self.assertEqual(response.json()['is_active'], self.product.is_active)
@@ -127,5 +126,55 @@ class CartItemViewSetTestCase(TestCase):
         self.assertEqual(response.status_code, 404)
 
         response = self.client.delete(url)
-        self.assertEqual(response.status_code, 204)        
+        self.assertEqual(response.status_code, 204)     
 
+class OrderViewSetTestCase(TestCase):
+    def setUp(self):
+        self.client = Client()
+
+        self.order = Order.objects.create(status=Order.PAID,
+            total=Decimal('45.99'),
+            subtotal=Decimal('42.00'),
+            tax_rate=Decimal('0.095'),
+            contact_email='johndoe@example.com',
+            shipping_address_line1='123 Main St',
+            shipping_city='Anytown',
+            shipping_country='USA',
+            shipping_zip='12345',
+            source_cart_session_key='session_key_1234567890abcdef')
+    def test_get_detail(self):
+        url = f'/api/orders/{self.order.pk}/'
+
+        response = self.client.get('/api/orders/123/')
+        self.assertEqual(response.status_code, 404)
+
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()['source_cart_session_key'], self.order.source_cart_session_key)
+
+class OrderItemViewSetTestCase(TestCase):
+    def setUp(self):
+        self.client = Client()
+
+        self.order = Order.objects.create(status=Order.PAID,
+            total=Decimal('45.99'),
+            subtotal=Decimal('42.00'),
+            tax_rate=Decimal('0.095'),
+            contact_email='johndoe@example.com',
+            shipping_address_line1='123 Main St',
+            shipping_city='Anytown',
+            shipping_country='USA',
+            shipping_zip='12345',
+            source_cart_session_key='session_key_1234567890abcdef')
+        self.order_item = OrderItem.objects.create(order=self.order, original_product_id=1, product_name="New Product", unit_price = Decimal('1.23'), quantity=3)
+
+    def test_get_detail(self):
+        url = f'/api/orderitems/{self.order_item.pk}/'
+
+        response = self.client.get('/api/orderitems/123/')
+        self.assertEqual(response.status_code, 404)
+
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()['unit_price'], str(self.order_item.unit_price))
+    

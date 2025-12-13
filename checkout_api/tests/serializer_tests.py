@@ -222,7 +222,7 @@ class OrderSerializerTestCase(TestCase):
         errors = serializer.errors
         self.assertEqual(str(errors['status'][0]), '"something" is not a valid choice.')
 
-        # # Success - TODO
+        # Success
         data = {
             'status': Order.PAID,
             'total': Decimal('45.99'),
@@ -238,18 +238,27 @@ class OrderSerializerTestCase(TestCase):
 
         serializer = OrderSerializer(data=data)
         self.assertTrue(serializer.is_valid())
-        # mock_request = self.factory.get('/api/orders/')
+        mock_request = self.factory.get('/api/orders/')
 
-        # serializer = OrderSerializer(data=data, context={'request': mock_request})
-        # self.assertTrue(serializer.is_valid())
-        # saved_instance = serializer.save()
+        serializer = OrderSerializer(data=data, context={'request': mock_request})
+        self.assertTrue(serializer.is_valid())
+        saved_instance = serializer.save()
 
-        # serializer = OrderSerializer(instance=saved_instance, context={'request': mock_request})
-        
-        # self.assertTrue(serializer.data['url'])
-        # self.assertTrue(serializer.data['cart'], data['cart'])
-        # self.assertTrue(serializer.data['product'], data['product'])
-        # self.assertTrue(serializer.data['quantity'], data['quantity'])
+        serializer = OrderSerializer(instance=saved_instance, context={'request': mock_request})
+
+        self.assertTrue(serializer.data['url'])
+        self.assertTrue(serializer.data['order_number'])
+        self.assertEqual(serializer.data['total'], str(data['total']))
+        self.assertEqual(serializer.data['subtotal'], str(data['subtotal']))
+        self.assertEqual(serializer.data['tax_rate'], str(data['tax_rate']))
+        self.assertEqual(serializer.data['status'], data['status'])
+        self.assertTrue(serializer.data['date_placed'])
+        self.assertEqual(serializer.data['source_cart_session_key'], data['source_cart_session_key'])
+        self.assertEqual(serializer.data['contact_email'], data['contact_email'])
+        self.assertEqual(serializer.data['shipping_address_line1'], data['shipping_address_line1'])
+        self.assertEqual(serializer.data['shipping_city'], data['shipping_city'])
+        self.assertEqual(serializer.data['shipping_country'], data['shipping_country'])
+        self.assertEqual(serializer.data['shipping_zip'], data['shipping_zip'])
 
 class OrderItemSerializerTestCase(TestCase):
     def setUp(self):
@@ -297,26 +306,28 @@ class OrderItemSerializerTestCase(TestCase):
         self.assertEqual(str(errors['quantity'][0]), "Ensure this value is greater than or equal to 1.")
         self.assertEqual(str(errors['order'][0]), "This field may not be null.")
 
-        # Success - TODO
-        # data = {
-        #     "original_product_id": 1,
-        #     "product_name": "Product",
-        #     "unit_price": Decimal('1.34'),
-        #     "quantity": 4,
-        #     "order": "",
-        # }
+        mock_request = self.factory.get('/api/orders/')
+        order = reverse(viewname='order-detail', kwargs={'pk': self.order.pk})
+        data = {
+            "original_product_id": 1,
+            "product_name": "Product",
+            "unit_price": Decimal('1.34'),
+            "quantity": 4,
+            "order": order,
+        }
 
-        # mock_request = self.factory.get('/api/orders/')
-        # serializer = OrderItemSerializer(data=data, context={'request': mock_request})
-        # self.assertTrue(serializer.is_valid())
+        serializer = OrderItemSerializer(data=data, context={'request': mock_request})
+        self.assertTrue(serializer.is_valid())
 
-        # serializer = OrderSerializer(data=data, context={'request': mock_request})
-        # self.assertTrue(serializer.is_valid())
-        # saved_instance = serializer.save()
+        serializer = OrderItemSerializer(data=data, context={'request': mock_request})
+        self.assertTrue(serializer.is_valid())
+        saved_instance = serializer.save()
 
-        # serializer = OrderSerializer(instance=saved_instance, context={'request': mock_request})
-        
-        # self.assertTrue(serializer.data['url'])
-        # self.assertTrue(serializer.data['cart'], data['cart'])
-        # self.assertTrue(serializer.data['product'], data['product'])
-        # self.assertTrue(serializer.data['quantity'], data['quantity'])
+        serializer = OrderItemSerializer(instance=saved_instance, context={'request': mock_request})
+
+        self.assertTrue(serializer.data['url'])
+        self.assertEqual(serializer.data['unit_price'], str(data['unit_price']))
+        self.assertEqual(serializer.data['quantity'], data['quantity'])
+        self.assertEqual(serializer.data['original_product_id'], data['original_product_id'])
+        self.assertEqual(serializer.data['product_name'], data['product_name'])
+        self.assertEqual(serializer.data['order'], 'http://testserver' + order)

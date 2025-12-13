@@ -18,13 +18,15 @@ from django.contrib import admin
 from django.urls import path, include
 from rest_framework import routers
 from mail_dispatch_api.views import DispatchAPIView
-from checkout_api.views import CartViewSet, ProductViewSet, CartItemViewSet
+from checkout_api.views import CartViewSet, ProductViewSet, CartItemViewSet, OrderViewSet, OrderItemViewSet
 from drf_spectacular.views import SpectacularAPIView, SpectacularRedocView, SpectacularSwaggerView
 
 router = routers.DefaultRouter()
 router.register(r'products', ProductViewSet, basename='product')
 router.register(r'carts', CartViewSet, basename='cart')
 router.register(r'cartitems', CartItemViewSet, basename='cartitem')
+router.register(r'orders', OrderViewSet, basename='order')
+router.register(r'orderitems', OrderItemViewSet, basename='orderitem')
 
 urlpatterns = [
     path('', SpectacularSwaggerView.as_view(url_name='schema'), name='swagger-ui'),
