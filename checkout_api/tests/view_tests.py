@@ -3,6 +3,7 @@ from checkout_api.models import Product, Cart, CartItem, Order, OrderItem
 from checkout_api.serializers import ProductSerializer, CartSerializer, CartItemSerializer
 from decimal import *
 from django.urls import reverse
+from unittest.mock import patch
 
 class ProductViewTestCase(TestCase):
     def setUp(self):
@@ -21,7 +22,7 @@ class CartViewTestCase(TestCase):
     def setUp(self):
         self.client = Client()
     def test_list(self):
-        response = self.client.get(f'/api/carts/')
+        response = self.client.get('/api/carts/')
 
         self.assertTrue(response.status_code, 200)
 
@@ -30,7 +31,7 @@ class CartViewTestCase(TestCase):
         self.assertEqual(response.json()['total'], Decimal(0.0))
         self.assertEqual(response.json()['subtotal'], Decimal(0.0))
     def test_retrieve(self):
-        response = self.client.get(f'/api/carts/')
+        response = self.client.get('/api/carts/')
 
         response = self.client.get(f'/api/carts/{response.json()['id']}/')
 
@@ -151,6 +152,30 @@ class OrderViewSetTestCase(TestCase):
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()['source_cart_session_key'], self.order.source_cart_session_key)
+    @patch("checkout_api.views.placeorder_task")
+    def test_post(self, mock_task):
+        url = '/api/orders/'
+
+        response = self.client.post('/api/orders/')
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.json()['msg'], 'Create your cart first.')
+
+        self.client.get('/api/carts/')
+
+        response = self.client.post('/api/orders/')
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.json()['msg'], 'Add items to your cart first.')
+
+        product = Product.objects.create(name="Test Product 1", price=22.45, stock=8, is_active=True)
+        cart = Cart.objects.get(pk=1)
+        CartItem.objects.create(cart=cart, product=product, quantity=2)
+
+        response = self.client.post('/api/orders/')
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()['msg'], "Success! We've accepted your order request and are dispatching the products now.")
+        mock_task.delay.assert_called_once()
+        mock_task.delay.assert_called_with({'session_key': cart.session_key})
+
 
 class OrderItemViewSetTestCase(TestCase):
     def setUp(self):
