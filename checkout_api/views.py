@@ -2,7 +2,7 @@ from django.shortcuts import render
 from rest_framework import viewsets
 from rest_framework.response import Response
 from django.shortcuts import get_object_or_404
-from checkout_api.serializers import CartSerializer, CartItemSerializer, ProductSerializer, OrderSerializer, OrderItemSerializer
+from checkout_api.serializers import CartSerializer, CartItemSerializer, ProductSerializer, OrderSerializer, OrderItemSerializer, OrderDataSerializer
 from checkout_api.models import Cart, Product, CartItem, Order, OrderItem
 from checkout_api.tasks import placeorder_task
 
@@ -52,15 +52,23 @@ class OrderViewSet(viewsets.ViewSet):
         return Response(serializer.data, status=200)
     
     def create(self, request):
-        data = { 'session_key': request.session.session_key }
+        session_key = request.session.session_key
 
-        if not data['session_key']:
+        if not request.session.session_key:
             return Response({'msg': 'Create your cart first.'}, status=400)
 
-        cartItems = CartItem.objects.filter(cart__session_key=data['session_key'])
+        cartItems = CartItem.objects.filter(cart__session_key=session_key)
 
         if len(cartItems) < 1:
             return Response({'msg': 'Add items to your cart first.'}, status=400)
+        
+        data = request.data.copy()
+        serializer = OrderDataSerializer(data=data)
+
+        if not serializer.is_valid():
+            return Response(serializer.errors, 400)
+        
+        data['session_key'] = session_key
 
         placeorder_task.delay(data)
         return Response({'msg': "Success! We've accepted your order request and are dispatching the products now."}, status=200)

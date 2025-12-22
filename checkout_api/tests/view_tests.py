@@ -4,6 +4,7 @@ from checkout_api.serializers import ProductSerializer, CartSerializer, CartItem
 from decimal import *
 from django.urls import reverse
 from unittest.mock import patch
+from django.http import QueryDict
 
 class ProductViewTestCase(TestCase):
     def setUp(self):
@@ -170,11 +171,32 @@ class OrderViewSetTestCase(TestCase):
         cart = Cart.objects.get(pk=1)
         CartItem.objects.create(cart=cart, product=product, quantity=2)
 
-        response = self.client.post('/api/orders/')
+        response = self.client.post('/api/orders/', data={})
+        self.assertEqual(response.status_code, 400)
+
+        data = {'contact_email': 'johndoe@example.com',
+            'shipping_address_line1': '123 Main St',
+            'shipping_city': 'Anytown',
+            'shipping_country': 'USA',
+            'shipping_zip': '12345'}
+
+        response = self.client.post('/api/orders/', data=data)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()['msg'], "Success! We've accepted your order request and are dispatching the products now.")
         mock_task.delay.assert_called_once()
-        mock_task.delay.assert_called_with({'session_key': cart.session_key})
+
+        expected = QueryDict('', mutable=True)
+
+        expected.update({
+            'contact_email': data['contact_email'],
+            'shipping_address_line1': data['shipping_address_line1'],
+            'shipping_city': data['shipping_city'],
+            'shipping_country': data['shipping_country'],
+            'shipping_zip': data['shipping_zip'],
+            'session_key': cart.session_key
+        })
+
+        mock_task.delay.assert_called_with(expected)
 
 
 class OrderItemViewSetTestCase(TestCase):

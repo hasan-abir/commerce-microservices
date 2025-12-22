@@ -61,3 +61,10 @@ class OrderItemSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = OrderItem
         fields = '__all__'
+
+class OrderDataSerializer(serializers.Serializer):
+    contact_email = serializers.EmailField()
+    shipping_address_line1 = serializers.CharField(max_length=100)
+    shipping_zip = serializers.CharField(max_length=100)
+    shipping_city = serializers.CharField(max_length=100)
+    shipping_country = serializers.CharField(max_length=100)
