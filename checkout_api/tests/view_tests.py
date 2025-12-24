@@ -198,6 +198,9 @@ class OrderViewSetTestCase(TestCase):
 
         mock_task.delay.assert_called_with(expected)
 
+        product = Product.objects.first()
+        order = Order.objects.first()
+
 
 class OrderItemViewSetTestCase(TestCase):
     def setUp(self):

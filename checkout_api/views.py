@@ -1,10 +1,15 @@
 from django.shortcuts import render
+from django.db import transaction
+from django.db.models import F
 from rest_framework import viewsets
 from rest_framework.response import Response
 from django.shortcuts import get_object_or_404
 from checkout_api.serializers import CartSerializer, CartItemSerializer, ProductSerializer, OrderSerializer, OrderItemSerializer, OrderDataSerializer
 from checkout_api.models import Cart, Product, CartItem, Order, OrderItem
 from checkout_api.tasks import placeorder_task
+import logging
+
+logger = logging.getLogger(__name__)
 
 class ProductViewSet(viewsets.ViewSet):
     def retrieve(self, request, pk):
@@ -68,11 +73,28 @@ class OrderViewSet(viewsets.ViewSet):
         if not serializer.is_valid():
             return Response(serializer.errors, 400)
         
-        data['session_key'] = session_key
+        try:
+            with transaction.atomic(): 
+                for item in cartItems:
+                    # Will allow rolling back db changes if the service crashes
+                        product = Product.objects.select_for_update().get(id=item.product.id)
 
-        placeorder_task.delay(data)
-        return Response({'msg': "Success! We've accepted your order request and are dispatching the products now."}, status=200)
+                        if product.stock >= item.quantity:
+                            # F() is to get the value straight from DB and not store it in Python's memory
+                            product.stock = F('stock') - item.quantity
+                            product.save()
+                            
+                            data['session_key'] = session_key
 
+                            placeorder_task.delay(data)
+                        else:
+                            return Response("Out of stock", status=400)
+            
+            return Response({'msg': "Success! We've accepted your order request and are dispatching the products now."}, status=200)
+        except Exception as e:
+            # exc_info is to trace the error
+            logger.error(f"Order failed for session {session_key}: {e}", exc_info=True)
+            raise e
         
 class OrderItemViewSet(viewsets.ViewSet):
     def retrieve(self, request, pk):

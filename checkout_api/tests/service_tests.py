@@ -9,8 +9,12 @@ class PlaceOrderServiceTestCase(TestCase):
         self.cartItem = CartItem.objects.create(cart=self.cart, product=self.product, quantity=4)
         
     def test_instance_validation(self):
-        data = {
-            'session_key': self.cart.session_key
-        }
+        data = {'contact_email': 'johndoe@example.com',
+            'shipping_address_line1': '123 Main St',
+            'shipping_city': 'Anytown',
+            'shipping_country': 'USA',
+            'shipping_zip': '12345',
+            'session_key': self.cart.session_key}
+
         placeorder_service(data)
         
