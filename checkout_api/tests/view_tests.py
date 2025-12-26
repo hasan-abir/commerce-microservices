@@ -169,7 +169,7 @@ class OrderViewSetTestCase(TestCase):
 
         product = Product.objects.create(name="Test Product 1", price=22.45, stock=8, is_active=True)
         cart = Cart.objects.get(pk=1)
-        CartItem.objects.create(cart=cart, product=product, quantity=2)
+        cartItem = CartItem.objects.create(cart=cart, product=product, quantity=2)
 
         response = self.client.post('/api/orders/', data={})
         self.assertEqual(response.status_code, 400)
@@ -179,7 +179,14 @@ class OrderViewSetTestCase(TestCase):
             'shipping_city': 'Anytown',
             'shipping_country': 'USA',
             'shipping_zip': '12345'}
+        product.stock = 0
+        product.save()
+        response = self.client.post('/api/orders/', data=data)
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.json()['msg'], "Out of stock")
 
+        product.stock = cartItem.quantity
+        product.save()
         response = self.client.post('/api/orders/', data=data)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()['msg'], "Success! We've accepted your order request and are dispatching the products now.")
@@ -198,9 +205,8 @@ class OrderViewSetTestCase(TestCase):
 
         mock_task.delay.assert_called_with(expected)
 
-        product = Product.objects.first()
-        order = Order.objects.first()
-
+        saved_product = Product.objects.get(pk=product.pk)
+        self.assertEqual(saved_product.stock, 0)
 
 class OrderItemViewSetTestCase(TestCase):
     def setUp(self):

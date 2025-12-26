@@ -55,7 +55,7 @@ class OrderViewSet(viewsets.ViewSet):
         serializer = OrderSerializer(order, context={'request': request})
 
         return Response(serializer.data, status=200)
-    
+     
     def create(self, request):
         session_key = request.session.session_key
 
@@ -88,7 +88,7 @@ class OrderViewSet(viewsets.ViewSet):
 
                             placeorder_task.delay(data)
                         else:
-                            return Response("Out of stock", status=400)
+                            return Response({'msg': 'Out of stock'}, status=400)
             
             return Response({'msg': "Success! We've accepted your order request and are dispatching the products now."}, status=200)
         except Exception as e:
