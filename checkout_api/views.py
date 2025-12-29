@@ -7,6 +7,7 @@ from django.shortcuts import get_object_or_404
 from checkout_api.serializers import CartSerializer, CartItemSerializer, ProductSerializer, OrderSerializer, OrderItemSerializer, OrderDataSerializer
 from checkout_api.models import Cart, Product, CartItem, Order, OrderItem
 from checkout_api.tasks import placeorder_task
+from rest_framework.exceptions import ValidationError
 import logging
 
 logger = logging.getLogger(__name__)
@@ -46,6 +47,17 @@ class CartItemViewSet(viewsets.ModelViewSet):
     queryset = CartItem.objects.all()
     serializer_class = CartItemSerializer
 
+    def perform_create(self, serializer):
+        session_key = self.request.session.session_key
+
+        if not session_key:
+            raise ValidationError({'msg': 'Create your cart first'})
+
+        cart = get_object_or_404(Cart, session_key=session_key)
+
+        serializer.save(cart=cart)
+
+
 class OrderViewSet(viewsets.ViewSet):
     def retrieve(self, request, pk):
         queryset = Order.objects.all()
@@ -59,7 +71,7 @@ class OrderViewSet(viewsets.ViewSet):
     def create(self, request):
         session_key = request.session.session_key
 
-        if not request.session.session_key:
+        if not session_key:
             return Response({'msg': 'Create your cart first.'}, status=400)
 
         cartItems = CartItem.objects.filter(cart__session_key=session_key)

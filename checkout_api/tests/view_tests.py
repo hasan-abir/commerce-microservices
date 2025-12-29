@@ -27,18 +27,18 @@ class CartViewTestCase(TestCase):
 
         self.assertTrue(response.status_code, 200)
 
-        self.assertEqual(response.json()['id'], 1)
+        self.assertEqual(response.json()['url'], f'http://testserver/api/carts/{1}/')
         self.assertTrue(response.json()['session_key'])
         self.assertEqual(response.json()['total'], Decimal(0.0))
         self.assertEqual(response.json()['subtotal'], Decimal(0.0))
     def test_retrieve(self):
         response = self.client.get('/api/carts/')
 
-        response = self.client.get(f'/api/carts/{response.json()['id']}/')
+        response = self.client.get(response.json()['url'])
 
         self.assertTrue(response.status_code, 200)
 
-        self.assertEqual(response.json()['id'], 1)
+        self.assertEqual(response.json()['url'], f'http://testserver/api/carts/{1}/')
         self.assertTrue(response.json()['session_key'])
         self.assertEqual(response.json()['total'], Decimal(0.0))
         self.assertEqual(response.json()['subtotal'], Decimal(0.0))
@@ -77,16 +77,21 @@ class CartItemViewSetTestCase(TestCase):
         self.assertEqual(response.status_code, 400)
 
         product = reverse('product-detail', kwargs={'pk': self.product1.pk})
-        cart = reverse('cart-detail', kwargs={'pk': self.cart1.pk})
         data = {
             "quantity": 1,
             "product": product,
-            "cart": cart
         }
+
+        response = self.client.post('/api/cartitems/', data=data)
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.json()['msg'], 'Create your cart first')
+
+        self.client.get('/api/carts/')
 
         response = self.client.post('/api/cartitems/', data=data)
         self.assertEqual(response.status_code, 201)
         self.assertEqual(response.json()['product'], f'http://testserver/api/products/{self.cartItem1.product.pk}/')
+        self.assertTrue(response.json()['cart'])
 
     def test_put(self):
         url = f'/api/cartitems/{self.cartItem1.pk}/'

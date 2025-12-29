@@ -9,7 +9,7 @@ class ProductSerializer(serializers.HyperlinkedModelSerializer):
         model = Product
         fields = '__all__'
 
-class CartSerializer(serializers.ModelSerializer):
+class CartSerializer(serializers.HyperlinkedModelSerializer):
     session_key = serializers.CharField(validators=[validators.UniqueValidator(queryset=Cart.objects.all(), message="Cart with this session key already exists.")])
     total = serializers.SerializerMethodField()
     subtotal = serializers.SerializerMethodField()
@@ -42,11 +42,17 @@ class CartSerializer(serializers.ModelSerializer):
 
 class CartItemSerializer(serializers.HyperlinkedModelSerializer):
     quantity = serializers.IntegerField(min_value=1)
+    cart = serializers.HyperlinkedRelatedField(
+        view_name='cart-detail',
+        queryset=Cart.objects.all(),
+        required=False
+    )
+
     class Meta:
         model = CartItem
         fields = '__all__'
 
-class OrderSerializer(serializers.ModelSerializer):
+class OrderSerializer(serializers.HyperlinkedModelSerializer):
     order_number = serializers.CharField(read_only=True)
     total = serializers.DecimalField(max_digits=10, decimal_places=2, min_value=Decimal('0.01'))
     subtotal = serializers.DecimalField(max_digits=10, decimal_places=2, min_value=Decimal('0.01'))
@@ -55,7 +61,7 @@ class OrderSerializer(serializers.ModelSerializer):
         model = Order
         fields = '__all__'
 
-class OrderItemSerializer(serializers.ModelSerializer):
+class OrderItemSerializer(serializers.HyperlinkedModelSerializer):
     unit_price = serializers.DecimalField(max_digits=10, decimal_places=2, min_value=round(Decimal('0.01'), 2))
     quantity = serializers.IntegerField(min_value=1)
     class Meta:

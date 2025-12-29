@@ -105,7 +105,7 @@ class CartSerializerTestCase(TestCase):
 
         mock_request = self.factory.get('/api/cart/')
         serializer = CartSerializer(self.cart, context={'request': mock_request})
-        self.assertTrue(serializer.data['id'])
+        self.assertTrue(serializer.data['url'])
         self.assertTrue(serializer.data['session_key'], data['session_key'])
         self.assertTrue(serializer.data['total'], Decimal('121.23'))
         self.assertTrue(serializer.data['subtotal'], Decimal('112.25'))
@@ -122,10 +122,9 @@ class CartItemSerializerTestCase(TestCase):
         serializer = CartItemSerializer(data={})
         self.assertFalse(serializer.is_valid())
         errors = serializer.errors
-        self.assertEqual(len(serializer.errors), 3)
+        self.assertEqual(len(serializer.errors), 2)
         self.assertEqual(str(errors['quantity'][0]), "This field is required.")
         self.assertEqual(str(errors['product'][0]), "This field is required.")
-        self.assertEqual(str(errors['cart'][0]), "This field is required.")
 
         # Blank validation
         data = {
@@ -135,7 +134,7 @@ class CartItemSerializerTestCase(TestCase):
         serializer = CartItemSerializer(data=data)
         self.assertFalse(serializer.is_valid())
         errors = serializer.errors
-        self.assertEqual(len(serializer.errors), 3)
+        self.assertEqual(len(serializer.errors), 2)
         self.assertEqual(str(errors['quantity'][0]), "Ensure this value is greater than or equal to 1.")
 
         # Success
