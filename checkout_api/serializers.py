@@ -39,7 +39,6 @@ class CartSerializer(serializers.HyperlinkedModelSerializer):
 
         return cart_total.quantize(Decimal("0.01"), rounding=ROUND_CEILING)
     
-
 class CartItemSerializer(serializers.HyperlinkedModelSerializer):
     quantity = serializers.IntegerField(min_value=1)
     cart = serializers.HyperlinkedRelatedField(
@@ -51,6 +50,10 @@ class CartItemSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = CartItem
         fields = '__all__'
+
+class CartItemRequestSerializer(CartItemSerializer):
+    class Meta(CartItemSerializer.Meta):
+        fields = ['product', 'quantity']
 
 class OrderSerializer(serializers.HyperlinkedModelSerializer):
     order_number = serializers.CharField(read_only=True)

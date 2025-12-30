@@ -4,10 +4,12 @@ from django.db.models import F
 from rest_framework import viewsets
 from rest_framework.response import Response
 from django.shortcuts import get_object_or_404
-from checkout_api.serializers import CartSerializer, CartItemSerializer, ProductSerializer, OrderSerializer, OrderItemSerializer, OrderDataSerializer
+from checkout_api.serializers import CartSerializer, CartItemSerializer, CartItemRequestSerializer, ProductSerializer, OrderSerializer, OrderItemSerializer, OrderDataSerializer
 from checkout_api.models import Cart, Product, CartItem, Order, OrderItem
 from checkout_api.tasks import placeorder_task
 from rest_framework.exceptions import ValidationError
+from rest_framework import serializers
+from drf_spectacular.utils import extend_schema, inline_serializer
 import logging
 
 logger = logging.getLogger(__name__)
@@ -47,6 +49,30 @@ class CartItemViewSet(viewsets.ModelViewSet):
     queryset = CartItem.objects.all()
     serializer_class = CartItemSerializer
 
+    @extend_schema(
+        request=CartItemRequestSerializer, 
+        responses={201: CartItemSerializer},
+        methods=['POST']
+    )
+    def create(self, request, *args, **kwargs):
+        return super().create(request, args, kwargs)
+    
+    @extend_schema(
+        request=CartItemRequestSerializer, 
+        responses={200: CartItemSerializer},
+        methods=['PUT']
+    )
+    def update(self, request, *args, **kwargs):
+        return super().update(request, *args, **kwargs)
+    
+    @extend_schema(
+        request=CartItemRequestSerializer, 
+        responses={200: CartItemSerializer},
+        methods=['PATCH']
+    )
+    def partial_update(self, request, *args, **kwargs):
+        return super().partial_update(request, *args, **kwargs)
+
     def perform_create(self, serializer):
         session_key = self.request.session.session_key
 
@@ -67,7 +93,16 @@ class OrderViewSet(viewsets.ViewSet):
         serializer = OrderSerializer(order, context={'request': request})
 
         return Response(serializer.data, status=200)
-     
+    
+    @extend_schema(
+        request=OrderDataSerializer, 
+        responses={200: inline_serializer(
+            name='OrderResponse',
+            fields={
+                'msg': serializers.CharField()
+            })},
+        methods=['POST']
+    )
     def create(self, request):
         session_key = request.session.session_key
 
