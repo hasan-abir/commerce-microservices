@@ -31,6 +31,15 @@ class CartViewTestCase(TestCase):
         self.assertTrue(response.json()['session_key'])
         self.assertEqual(response.json()['total'], Decimal(0.0))
         self.assertEqual(response.json()['subtotal'], Decimal(0.0))
+
+        carts = Cart.objects.all()
+
+        self.assertEqual(len(carts), 1)
+
+        response = self.client.get('/api/carts/')
+
+        self.assertEqual(len(carts), 1)
+
     def test_retrieve(self):
         response = self.client.get('/api/carts/')
 

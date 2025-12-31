@@ -30,6 +30,8 @@ class CartTestCase(TestCase):
         cart = Cart.objects.get(session_key=self.cart.session_key)
 
         self.assertEqual(cart.session_key, self.cart.session_key)
+        self.assertTrue(cart.created_at)
+        self.assertTrue(cart.updated_at)
 
     def test_str_method(self):
         cart = Cart.objects.get(session_key=self.cart.session_key)
