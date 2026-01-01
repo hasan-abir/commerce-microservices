@@ -2,6 +2,7 @@ from checkout_api.services import placeorder_service
 from django.test import TestCase
 from checkout_api.models import Cart, CartItem, Product, Order, OrderItem
 from decimal import *
+from unittest.mock import patch
 
 class PlaceOrderServiceTestCase(TestCase):
     def setUp(self):
@@ -35,7 +36,7 @@ class PlaceOrderServiceTestCase(TestCase):
         self.assertEqual(orders[0].subtotal, Decimal('130.70'))
         self.assertEqual(orders[0].tax_rate, Decimal('0.08'))
         self.assertEqual(orders[0].status, Order.PENDING)
-        
+
         orderItems = OrderItem.objects.all()
         self.assertEqual(len(orderItems), 2)
         self.assertEqual(orderItems[0].original_product_id, self.product1.pk )
@@ -46,4 +47,28 @@ class PlaceOrderServiceTestCase(TestCase):
         self.assertEqual(orderItems[1].product_name, self.product2.name )
         self.assertEqual(str(orderItems[1].unit_price), str(self.product2.price) )
         self.assertEqual(orderItems[1].quantity, self.cartItem2.quantity )
+
+        savedCart = Cart.objects.get(pk=self.cart.pk)
+
+        self.assertEqual(savedCart.status, Cart.COMPLETED)
+
+    @patch('checkout_api.models.Order.objects.create')
+    def test_fail_method(self, mock_create):
+        print(123)
+        mock_create.side_effect = Exception("The database is lit, bruv!")
+
+        data = {'contact_email': 'johndoe@example.com',
+            'shipping_address_line1': '123 Main St',
+            'shipping_city': 'Anytown',
+            'shipping_country': 'USA',
+            'shipping_zip': '12345',
+            'session_key': self.cart.session_key}
+
+        with self.assertRaises(Exception):
+            placeorder_service(data)
+            
+        cart = Cart.objects.get(pk=self.cart.pk)
+        self.assertEqual(cart.status, Cart.FAILED)
+
+            
             

@@ -222,6 +222,9 @@ class OrderViewSetTestCase(TestCase):
         saved_product = Product.objects.get(pk=product.pk)
         self.assertEqual(saved_product.stock, 0)
 
+        saved_cart = Cart.objects.get(pk=cart.pk)
+        self.assertEqual(saved_cart.status, Cart.PROCESSING)
+
 class OrderItemViewSetTestCase(TestCase):
     def setUp(self):
         self.client = Client()

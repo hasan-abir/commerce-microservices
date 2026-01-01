@@ -13,7 +13,19 @@ class Product(models.Model):
         return self.name
 
 class Cart(models.Model):
+    ACTIVE = "ACT"
+    PROCESSING = "PRO"
+    COMPLETED = "COM"
+    FAILED = "FAI"
+    STATUS_CHOICES = {
+        ACTIVE: "Active",
+        PROCESSING: "Processing",
+        COMPLETED: "Completed",
+        FAILED: "Failed"
+    }
+
     session_key = models.CharField(max_length=50, unique=True)
+    status = models.CharField(choices=STATUS_CHOICES, max_length=3, default=ACTIVE)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

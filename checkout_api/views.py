@@ -133,6 +133,10 @@ class OrderViewSet(viewsets.ViewSet):
                             
                             data['session_key'] = session_key
 
+                            cart = Cart.objects.get(session_key=session_key)
+                            cart.status = Cart.PROCESSING
+                            cart.save()
+
                             placeorder_task.delay(data)
                         else:
                             return Response({'msg': 'Out of stock'}, status=400)
