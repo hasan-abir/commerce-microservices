@@ -1,8 +1,10 @@
-from checkout_api.services import placeorder_service
+from checkout_api.services import placeorder_service, cleanupcarts_service
 from django.test import TestCase
 from checkout_api.models import Cart, CartItem, Product, Order, OrderItem
 from decimal import *
 from unittest.mock import patch
+from django.utils import timezone
+from datetime import timedelta
 
 class PlaceOrderServiceTestCase(TestCase):
     def setUp(self):
@@ -54,7 +56,6 @@ class PlaceOrderServiceTestCase(TestCase):
 
     @patch('checkout_api.models.Order.objects.create')
     def test_fail_method(self, mock_create):
-        print(123)
         mock_create.side_effect = Exception("The database is lit, bruv!")
 
         data = {'contact_email': 'johndoe@example.com',
@@ -69,6 +70,25 @@ class PlaceOrderServiceTestCase(TestCase):
             
         cart = Cart.objects.get(pk=self.cart.pk)
         self.assertEqual(cart.status, Cart.FAILED)
+                 
+class CleanupCartServiceTestCase(TestCase):
+    def test_return(self):
+        cart1 = Cart.objects.create(session_key='1')
+        cart2 = Cart.objects.create(session_key='2')
+        cart3 = Cart.objects.create(session_key='3')
+        cart4 = Cart.objects.create(session_key='4', status=Cart.PROCESSING)
+        cart5 = Cart.objects.create(session_key='5', status=Cart.COMPLETED)
+        cart6 = Cart.objects.create(session_key='6', status=Cart.FAILED)
+        cart7 = Cart.objects.create(session_key='7', status=Cart.FAILED)
+        cart8 = Cart.objects.create(session_key='8', status=Cart.COMPLETED)
+        cart9 = Cart.objects.create(session_key='9', status=Cart.PROCESSING)
 
-            
-            
+        three_days_ago = timezone.now() - timedelta(days=3)
+        Cart.objects.filter(id__in=[cart2.id, cart3.id, cart7.id, cart8.id, cart9.id]).update(created_at=three_days_ago, updated_at=three_days_ago)
+        
+        count = cleanupcarts_service()
+
+        self.assertEqual(count, 3)
+
+        self.assertTrue(Cart.objects.filter(id__in=[cart1.pk, cart4.pk, cart5.pk, cart6.pk, cart8.pk, cart9.pk]).exists())
+        self.assertFalse(Cart.objects.filter(id__in=[cart2.pk, cart3.pk, cart7.pk]).exists())

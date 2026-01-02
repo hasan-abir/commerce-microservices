@@ -4,6 +4,8 @@ from django.db import transaction
 from checkout_api.models import Cart, CartItem, Order, OrderItem
 from checkout_api.serializers import CartSerializer
 from decimal import *
+from django.utils import timezone
+from datetime import timedelta
 import logging
 
 logger = logging.getLogger(__name__)
@@ -39,3 +41,16 @@ def placeorder_service(data):
 
         logger.error(f"Order failed for session {session_key}: {e}", exc_info=True)
         raise e
+
+def cleanupcarts_service():
+    threshold = timezone.now() - timedelta(hours=48)
+
+    abandoned_carts = Cart.objects.filter(
+        status__in=[Cart.ACTIVE, Cart.FAILED],
+        updated_at__lt=threshold
+    )
+
+    count = abandoned_carts.count()
+    abandoned_carts.delete()
+
+    return count
