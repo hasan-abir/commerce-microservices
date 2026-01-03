@@ -2,7 +2,7 @@ from checkout_api.services import placeorder_service, cleanupcarts_service
 from django.test import TestCase
 from checkout_api.models import Cart, CartItem, Product, Order, OrderItem
 from decimal import *
-from unittest.mock import patch
+from unittest.mock import patch, ANY
 from django.utils import timezone
 from datetime import timedelta
 
@@ -13,8 +13,8 @@ class PlaceOrderServiceTestCase(TestCase):
         self.product2 = Product.objects.create(name="Test Product 2", price=20.45, stock=8, is_active=True)
         self.cartItem1 = CartItem.objects.create(cart=self.cart, product=self.product1, quantity=4)
         self.cartItem2 = CartItem.objects.create(cart=self.cart, product=self.product2, quantity=2)
-        
-    def test_method(self):
+    @patch('checkout_api.services.sendmail_service')
+    def test_method(self, mock_service):
         data = {'contact_email': 'johndoe@example.com',
             'shipping_address_line1': '123 Main St',
             'shipping_city': 'Anytown',
@@ -54,6 +54,13 @@ class PlaceOrderServiceTestCase(TestCase):
 
         self.assertEqual(savedCart.status, Cart.COMPLETED)
 
+        mock_service.assert_called_once()
+        mock_service.assert_called_with({
+            'recipient': data['contact_email'],
+            'subject': ANY,
+            'msg_content': ANY
+        })
+
     @patch('checkout_api.models.Order.objects.create')
     def test_fail_method(self, mock_create):
         mock_create.side_effect = Exception("The database is lit, bruv!")
@@ -82,13 +89,19 @@ class CleanupCartServiceTestCase(TestCase):
         cart7 = Cart.objects.create(session_key='7', status=Cart.FAILED)
         cart8 = Cart.objects.create(session_key='8', status=Cart.COMPLETED)
         cart9 = Cart.objects.create(session_key='9', status=Cart.PROCESSING)
+        cart10 = Cart.objects.create(session_key='10', status=Cart.COMPLETED)
+        cart11 = Cart.objects.create(session_key='11', status=Cart.COMPLETED)
 
         three_days_ago = timezone.now() - timedelta(days=3)
         Cart.objects.filter(id__in=[cart2.id, cart3.id, cart7.id, cart8.id, cart9.id]).update(created_at=three_days_ago, updated_at=three_days_ago)
         
+        ninety_one_days_ago = timezone.now() - timedelta(days=91)
+        Cart.objects.filter(id__in=[cart10.id, cart11.id]).update(created_at=ninety_one_days_ago, updated_at=ninety_one_days_ago)
+        
+        
         count = cleanupcarts_service()
 
-        self.assertEqual(count, 3)
+        self.assertEqual(count, 5)
 
         self.assertTrue(Cart.objects.filter(id__in=[cart1.pk, cart4.pk, cart5.pk, cart6.pk, cart8.pk, cart9.pk]).exists())
-        self.assertFalse(Cart.objects.filter(id__in=[cart2.pk, cart3.pk, cart7.pk]).exists())
+        self.assertFalse(Cart.objects.filter(id__in=[cart2.pk, cart3.pk, cart7.pk, cart10.pk, cart11.pk]).exists())

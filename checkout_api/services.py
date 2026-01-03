@@ -6,6 +6,7 @@ from checkout_api.serializers import CartSerializer
 from decimal import *
 from django.utils import timezone
 from datetime import timedelta
+from mail_dispatch_api.services import sendmail_service
 import logging
 
 logger = logging.getLogger(__name__)
@@ -29,8 +30,12 @@ def placeorder_service(data):
 
             cart.status = Cart.COMPLETED
             cart.save()
-    
-            return f"Order {order.id} processed successfully."
+
+            sendmail_service({
+                'recipient': data['contact_email'],
+                'subject': f'For Order number: {order.order_number}',
+                'msg_content': "Order processed successfully. We'll contact you soon (keep your doors unlocked 😊)."
+            })
     except Exception as e:
         # exc_info is to trace the error
         try:
@@ -43,14 +48,23 @@ def placeorder_service(data):
         raise e
 
 def cleanupcarts_service():
-    threshold = timezone.now() - timedelta(hours=48)
+    abandoned_threshold = timezone.now() - timedelta(hours=48)
+    completed_threshold = timezone.now() - timedelta(days=90)
 
     abandoned_carts = Cart.objects.filter(
         status__in=[Cart.ACTIVE, Cart.FAILED],
-        updated_at__lt=threshold
+        updated_at__lt=abandoned_threshold
+    )
+
+    completed_carts = Cart.objects.filter(
+        status__in=[Cart.COMPLETED],
+        updated_at__lt=completed_threshold
     )
 
     count = abandoned_carts.count()
     abandoned_carts.delete()
+
+    count = count + completed_carts.count()
+    completed_carts.delete()
 
     return count

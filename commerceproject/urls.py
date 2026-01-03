@@ -31,7 +31,7 @@ router.register(r'orderitems', OrderItemViewSet, basename='orderitem')
 urlpatterns = [
     path('', SpectacularSwaggerView.as_view(url_name='schema'), name='swagger-ui'),
     path('api/', include(router.urls)),
-    path('api/sendmail/', view=DispatchAPIView.as_view(), name='sendmail'),
+    # path('api/sendmail/', view=DispatchAPIView.as_view(), name='sendmail'),
     path('api/schema/', SpectacularAPIView.as_view(), name='schema'),
     path('api/schema/redoc/', SpectacularRedocView.as_view(url_name='schema'), name='redoc'),
     path('admin/', admin.site.urls),
