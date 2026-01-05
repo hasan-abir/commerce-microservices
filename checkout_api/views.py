@@ -31,7 +31,13 @@ class CartViewSet(viewsets.ViewSet):
         
         session_key = request.session.session_key
 
-        cart, created = Cart.objects.get_or_create(session_key=session_key)
+        cart = Cart.objects.filter(session_key=session_key, status=Cart.ACTIVE).first()
+
+        if not cart:
+            request.session.cycle_key()
+            new_session_key = request.session.session_key
+
+            cart = Cart.objects.create(session_key=new_session_key)
 
         serializer = CartSerializer(cart, context={'request': request})
 

@@ -40,6 +40,21 @@ class CartViewTestCase(TestCase):
 
         self.assertEqual(len(carts), 1)
 
+        response = self.client.get('/api/carts/')
+
+        self.assertEqual(len(carts), 1)
+
+        old_cart = carts.first()
+        old_cart.status = Cart.COMPLETED
+        old_cart.save()
+
+        response = self.client.get('/api/carts/')
+        
+        carts = Cart.objects.all()
+
+        self.assertEqual(len(carts), 2)
+
+
     def test_retrieve(self):
         response = self.client.get('/api/carts/')
 
