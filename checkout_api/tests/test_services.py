@@ -1,4 +1,4 @@
-from checkout_api.services import placeorder_service, cleanupcarts_service
+from checkout_api.services import placeorder_service, cleanupcarts_service, seedproducts_service
 from django.test import TestCase
 from checkout_api.models import Cart, CartItem, Product, Order, OrderItem
 from decimal import *
@@ -105,3 +105,17 @@ class CleanupCartServiceTestCase(TestCase):
 
         self.assertTrue(Cart.objects.filter(id__in=[cart1.pk, cart4.pk, cart5.pk, cart6.pk, cart8.pk, cart9.pk]).exists())
         self.assertFalse(Cart.objects.filter(id__in=[cart2.pk, cart3.pk, cart7.pk, cart10.pk, cart11.pk]).exists())
+
+class SeedProductsServiceTestCase(TestCase):
+    def test_return(self):
+        seedproducts_service()
+        
+        products = Product.objects.all()
+
+        self.assertEqual(len(products), 10)
+        
+        seedproducts_service()
+        
+        products = Product.objects.all()
+
+        self.assertEqual(len(products), 10)

@@ -1,7 +1,7 @@
 from django.conf import settings
 from django.core.mail import send_mail
 from django.db import transaction
-from checkout_api.models import Cart, CartItem, Order, OrderItem
+from checkout_api.models import Cart, CartItem, Order, OrderItem, Product
 from checkout_api.serializers import CartSerializer
 from decimal import *
 from django.utils import timezone
@@ -68,3 +68,23 @@ def cleanupcarts_service():
     completed_carts.delete()
 
     return count
+
+def seedproducts_service():
+    products_data = [
+        {"name": "Abstract Horizon", "price": 120.00, "stock": 5},
+        {"name": "Midnight Jazz Preview", "price": 15.00, "stock": 100},
+        {"name": "Golden Hour Canvas", "price": 250.00, "stock": 2},
+        {"name": "Urban Echoes Audio", "price": 12.50, "stock": 50},
+        {"name": "Neon Dreams", "price": 85.00, "stock": 10},
+        {"name": "Sapphire Skies", "price": 300.00, "stock": 1},
+        {"name": "Rhythm & Blues", "price": 20.00, "stock": 200},
+        {"name": "Crimson Texture", "price": 145.00, "stock": 4},
+        {"name": "Silent Forest", "price": 110.00, "stock": 7},
+        {"name": "Electric Pulse", "price": 18.00, "stock": 75},
+    ]
+
+    for product in products_data:
+        Product.objects.get_or_create(name=product['name'], price=product['price'], stock=product['stock'], is_active=True)
+
+
+

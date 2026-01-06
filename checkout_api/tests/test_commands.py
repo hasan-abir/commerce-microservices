@@ -20,3 +20,13 @@ class CleanupCartsCommandTestCase(TestCase):
         mock_service.assert_called_once()
 
         self.assertIn(f'Successfully deleted "{count}" abandoned carts', out.getvalue())
+
+class SeedProductsCommandTestCase(TestCase):
+    @patch('checkout_api.management.commands.seed_products.seedproducts_service')
+    def test_output(self, mock_service):
+        out = StringIO()
+        call_command('seed_products', stdout=out)
+
+        mock_service.assert_called_once()
+
+        self.assertIn('Successfully created 10 example products', out.getvalue())

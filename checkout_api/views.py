@@ -14,13 +14,26 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-class ProductViewSet(viewsets.ViewSet):
+class ProductViewSet(viewsets.GenericViewSet):
     def retrieve(self, request, pk):
         queryset = Product.objects.all()
 
         product = get_object_or_404(queryset, pk=pk)
 
         serializer = ProductSerializer(product, context={'request': request})
+
+        return Response(serializer.data, status=200)
+
+    def list(self, request):
+        queryset = Product.objects.all()
+
+        page = self.paginate_queryset(queryset)
+    
+        if page is not None:
+            serializer = ProductSerializer(page, context={'request': request}, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        serializer = ProductSerializer(queryset, context={'request': request}, many=True)
 
         return Response(serializer.data, status=200)
     

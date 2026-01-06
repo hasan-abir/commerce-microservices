@@ -18,6 +18,20 @@ class ProductViewTestCase(TestCase):
         self.assertEqual(response.json()['name'], self.product.name)
         self.assertEqual(response.json()['price'], str(self.product.price))
         self.assertEqual(response.json()['is_active'], self.product.is_active)
+    def test_list(self):
+        product2 = Product.objects.create(name="Test Product2", price=22.45, stock=8, is_active=True)
+        product3 = Product.objects.create(name="Test Product3", price=22.45, stock=8, is_active=True)
+
+        response = self.client.get(f'/api/products/')
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()['count'], 3)
+        self.assertEqual(response.json()['results'][0]['name'], self.product.name)
+        self.assertEqual(response.json()['results'][1]['name'], product2.name)
+        self.assertEqual(response.json()['results'][2]['name'], product3.name)
+        # self.assertEqual(response.json()['name'], self.product.name)
+        # self.assertEqual(response.json()['price'], str(self.product.price))
+        # self.assertEqual(response.json()['is_active'], self.product.is_active)
 
 class CartViewTestCase(TestCase):
     def setUp(self):
