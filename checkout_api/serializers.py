@@ -17,7 +17,7 @@ class CartSerializer(serializers.HyperlinkedModelSerializer):
         model = Cart
         fields = '__all__'
 
-    def get_subtotal(self, obj):
+    def get_subtotal(self, obj) -> Decimal:
         cart_subtotal = 0
 
         cartItems = CartItem.objects.filter(cart=obj)
@@ -29,7 +29,7 @@ class CartSerializer(serializers.HyperlinkedModelSerializer):
 
         return cart_subtotal.quantize(Decimal("0.01"), rounding=ROUND_CEILING)
     
-    def get_total(self, obj):
+    def get_total(self, obj) -> Decimal:
         tax_rate = Decimal("0.08")
         cart_subtotal = self.get_subtotal(obj)
 

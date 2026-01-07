@@ -1,7 +1,7 @@
 from django.shortcuts import render
 from django.db import transaction
 from django.db.models import F
-from rest_framework import viewsets
+from rest_framework import viewsets, mixins
 from rest_framework.response import Response
 from django.shortcuts import get_object_or_404
 from checkout_api.serializers import CartSerializer, CartItemSerializer, CartItemRequestSerializer, ProductSerializer, OrderSerializer, OrderItemSerializer, OrderDataSerializer
@@ -9,35 +9,21 @@ from checkout_api.models import Cart, Product, CartItem, Order, OrderItem
 from checkout_api.tasks import placeorder_task
 from rest_framework.exceptions import ValidationError
 from rest_framework import serializers
-from drf_spectacular.utils import extend_schema, inline_serializer
+from drf_spectacular.utils import extend_schema, inline_serializer, extend_schema_view
 import logging
 
 logger = logging.getLogger(__name__)
 
-class ProductViewSet(viewsets.GenericViewSet):
-    def retrieve(self, request, pk):
-        queryset = Product.objects.all()
+class ProductViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin,viewsets.GenericViewSet):
+    serializer_class = ProductSerializer
 
-        product = get_object_or_404(queryset, pk=pk)
-
-        serializer = ProductSerializer(product, context={'request': request})
-
-        return Response(serializer.data, status=200)
-
-    def list(self, request):
-        queryset = Product.objects.all()
-
-        page = self.paginate_queryset(queryset)
-    
-        if page is not None:
-            serializer = ProductSerializer(page, context={'request': request}, many=True)
-            return self.get_paginated_response(serializer.data)
-
-        serializer = ProductSerializer(queryset, context={'request': request}, many=True)
-
-        return Response(serializer.data, status=200)
+    queryset = Product.objects.all()
+    serializer_class = ProductSerializer
     
 class CartViewSet(viewsets.ViewSet):
+    serializer_class = CartSerializer
+    queryset = Cart.objects.all()
+
     def list(self, request):
         if not request.session.session_key:
             request.session.save()
@@ -56,9 +42,8 @@ class CartViewSet(viewsets.ViewSet):
 
         return Response(serializer.data, status=200)
     
-    def retrieve(self, request, pk):
-        queryset = Cart.objects.all()
-        cart_item = get_object_or_404(queryset, pk=pk)
+    def retrieve(self, request, pk: int):
+        cart_item = get_object_or_404(self.queryset, pk=pk)
 
         serializer = CartSerializer(cart_item, context={'request': request})
 
@@ -104,10 +89,11 @@ class CartItemViewSet(viewsets.ModelViewSet):
 
 
 class OrderViewSet(viewsets.ViewSet):
-    def retrieve(self, request, pk):
-        queryset = Order.objects.all()
+    serializer_class = OrderSerializer
+    queryset = Order.objects.all()
 
-        order = get_object_or_404(queryset, pk=pk)
+    def retrieve(self, request, pk):
+        order = get_object_or_404(self.queryset, pk=pk)
 
         serializer = OrderSerializer(order, context={'request': request})
 
@@ -167,10 +153,11 @@ class OrderViewSet(viewsets.ViewSet):
             raise e
         
 class OrderItemViewSet(viewsets.ViewSet):
-    def retrieve(self, request, pk):
-        queryset = OrderItem.objects.all()
+    serializer_class = OrderItemSerializer
+    queryset = OrderItem.objects.all()
 
-        order_item = get_object_or_404(queryset, pk=pk)
+    def retrieve(self, request, pk):
+        order_item = get_object_or_404(self.queryset, pk=pk)
 
         serializer = OrderItemSerializer(order_item, context={'request': request})
 
