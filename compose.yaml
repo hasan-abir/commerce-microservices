@@ -10,11 +10,20 @@ services:
     build: .
     ports:
       - "8000:8000"
+    command: sh -c "python manage.py migrate && python manage.py seed_products && python manage.py runserver 0.0.0.0:8000"
+    develop:
+      watch:
+        - action: sync
+          path: ./
+          target: /usr/src/app/
+          initial_sync: true
+          ignore:
+            - env/
+        - action: rebuild
+          path: requirements.txt
     environment:
       CELERY_BROKER_URL: redis://redis:6379
       HOST: 0.0.0.0
-    volumes:
-      - .:/usr/src/app
     depends_on:
       - redis
       - mailhog
