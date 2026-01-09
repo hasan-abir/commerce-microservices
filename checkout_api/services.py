@@ -22,19 +22,30 @@ def placeorder_service(data):
             cartItems = CartItem.objects.filter(cart__session_key=session_key)
             
             order = Order.objects.create(status=Order.PENDING, source_cart_session_key=session_key, total=cartSerializer.data['total'], subtotal=cartSerializer.data['subtotal'], tax_rate=Decimal('0.08'), contact_email=data['contact_email'], shipping_address_line1=data['shipping_address_line1'], shipping_city=data['shipping_city'], shipping_country=data['shipping_country'], shipping_zip=data['shipping_zip'])
+            
+            item_summary_list = []
 
             for item in cartItems:
                 OrderItem.objects.create(order=order, original_product_id=item.product.pk, product_name=item.product.name, unit_price=item.product.price, quantity=item.quantity)
+
+                item_summary_list.append(f"- {item.product.name} (x{item.quantity})")
 
             cartItems.delete()
 
             cart.status = Cart.COMPLETED
             cart.save()
 
+            items_string = "\n".join(item_summary_list)
+
             sendmail_service({
                 'recipient': data['contact_email'],
-                'subject': f'For Order number: {order.order_number}',
-                'msg_content': "Order processed successfully. We'll contact you soon (keep your doors unlocked 😊)."
+                'subject': f'Order confirmed: {order.order_number}',
+                'msg_content': (
+                    f"Order processed successfully!\n\n"
+                    f"Items Ordered:\n{items_string}\n\n"
+                    f"Total: ${order.total}\n\n"
+                    f"We'll contact you soon (keep your doors unlocked 😊)."
+                )
             })
     except Exception as e:
         # exc_info is to trace the error

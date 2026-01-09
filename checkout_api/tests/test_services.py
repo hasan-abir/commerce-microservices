@@ -58,7 +58,7 @@ class PlaceOrderServiceTestCase(TestCase):
         mock_service.assert_called_with({
             'recipient': data['contact_email'],
             'subject': ANY,
-            'msg_content': ANY
+            'msg_content': "Order processed successfully!\n\nItems Ordered:\n- Test Product (x4)\n- Test Product 2 (x2)\n\nTotal: $141.16\n\nWe'll contact you soon (keep your doors unlocked 😊)."
         })
 
     @patch('checkout_api.models.Order.objects.create')
