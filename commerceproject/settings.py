@@ -90,10 +90,14 @@ WSGI_APPLICATION = 'commerceproject.wsgi.application'
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    }
+    "default": {
+        "NAME": os.environ.get('POSTGRES_DB') or 'commerceproject',
+        "ENGINE": "django.db.backends.postgresql",
+        "USER": os.environ.get('POSTGRES_USER') or 'exampleuser',
+        "PASSWORD": os.environ.get('POSTGRES_PASSWORD') or 'testtest',
+        "HOST": "postgres",
+        "PORT": "5432",
+    },
 }
 
 

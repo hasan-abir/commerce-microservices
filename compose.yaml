@@ -4,9 +4,19 @@ services:
     restart: always
     shm_size: 128mb
     environment:
-      POSTGRES_DB: db
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: example
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    healthcheck:
+      # This command checks if Postgres is actually accepting connections
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U ${POSTGRES_USER:-exampleuser} -d ${POSTGRES_DB:-commerceproject}",
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
   adminer:
     image: adminer
     restart: always
@@ -40,9 +50,16 @@ services:
     environment:
       CELERY_BROKER_URL: redis://redis:6379
       HOST: 0.0.0.0
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     depends_on:
-      - redis
-      - mailhog
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+      mailhog:
+        condition: service_started
   worker:
     build: .
     command: celery -A commerceproject worker -l INFO
