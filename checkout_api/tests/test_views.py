@@ -5,6 +5,7 @@ from decimal import *
 from django.urls import reverse
 from unittest.mock import patch
 from django.http import QueryDict
+from django.test import TransactionTestCase
 
 class ProductViewTestCase(TestCase):
     def setUp(self):
@@ -33,7 +34,9 @@ class ProductViewTestCase(TestCase):
         # self.assertEqual(response.json()['price'], str(self.product.price))
         # self.assertEqual(response.json()['is_active'], self.product.is_active)
 
-class CartViewTestCase(TestCase):
+class CartViewTestCase(TransactionTestCase):
+    reset_sequences = True
+
     def setUp(self):
         self.client = Client()
     def test_list(self):
@@ -211,7 +214,7 @@ class OrderViewSetTestCase(TestCase):
         self.assertEqual(response.json()['msg'], 'Add items to your cart first.')
 
         product = Product.objects.create(name="Test Product 1", price=22.45, stock=8, is_active=True)
-        cart = Cart.objects.get(pk=1)
+        cart = Cart.objects.first()
         cartItem = CartItem.objects.create(cart=cart, product=product, quantity=2)
 
         response = self.client.post('/api/orders/', data={})
@@ -226,7 +229,7 @@ class OrderViewSetTestCase(TestCase):
         product.save()
         response = self.client.post('/api/orders/', data=data)
         self.assertEqual(response.status_code, 400)
-        self.assertEqual(response.json()['msg'], "Out of stock")
+        self.assertEqual(response.json()['msg'], f"{product.name}: Out of stock")
 
         product.stock = cartItem.quantity
         product.save()

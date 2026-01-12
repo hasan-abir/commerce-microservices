@@ -44,9 +44,6 @@ services:
             - env/
         - action: rebuild
           path: requirements.txt
-    # To sync sqlite.3 db
-    volumes:
-      - .:/usr/src/app/
     environment:
       CELERY_BROKER_URL: redis://redis:6379
       HOST: 0.0.0.0
@@ -72,9 +69,13 @@ services:
       EMAIL_USE_TLS: ${EMAIL_USE_TLS}
       EMAIL_USE_SSL: ${EMAIL_USE_SSL}
       DEFAULT_FROM_EMAIL: ${DEFAULT_FROM_EMAIL}
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     depends_on:
-      - redis
-      - mailhog
-    # To sync sqlite.3 db
-    volumes:
-      - .:/usr/src/app/
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+      mailhog:
+        condition: service_started
