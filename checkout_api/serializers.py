@@ -51,6 +51,14 @@ class CartItemSerializer(serializers.HyperlinkedModelSerializer):
         model = CartItem
         fields = '__all__'
 
+        validators = [
+            validators.UniqueTogetherValidator(
+                queryset=CartItem.objects.all(),
+                fields=['cart', 'product'],
+                message="This product is already in the cart."
+            )
+        ]
+
 class CartItemRequestSerializer(CartItemSerializer):
     class Meta(CartItemSerializer.Meta):
         fields = ['product', 'quantity']

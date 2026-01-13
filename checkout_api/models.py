@@ -39,6 +39,12 @@ class CartItem(models.Model):
 
     class Meta:
         ordering = ['-quantity']
+        constraints = [
+            models.UniqueConstraint(
+                fields=['cart', 'product'], 
+                name='unique_cart_product'
+            )
+        ]
 
     def __str__(self):
         return f"Belongs to cart: {self.cart.session_key}"

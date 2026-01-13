@@ -68,7 +68,7 @@ class CartSerializerTestCase(TestCase):
         self.product2 = Product.objects.create(name="Test Product 2", price=22.45, stock=2, 
         is_active=True)
         self.cartItem1 = CartItem.objects.create(cart=self.cart, product=self.product1, quantity=2)
-        self.cartItem2 = CartItem.objects.create(cart=self.cart, product=self.product1, quantity=3)
+        self.cartItem2 = CartItem.objects.create(cart=self.cart, product=self.product2, quantity=3)
 
     def test_instance_validation(self):
         # Null validation
@@ -115,6 +115,7 @@ class CartItemSerializerTestCase(TestCase):
         self.factory = RequestFactory()
 
         self.product = Product.objects.create(name="Test Product", price=22.45, stock=8, is_active=True)
+        self.product1 = Product.objects.create(name="Test Product 1", price=22.45, stock=8, is_active=True)
         self.cart = Cart.objects.create(session_key="123")
         self.cartItem = CartItem.objects.create(cart=self.cart, product=self.product, quantity=4)
     def test_instance_validation(self):
@@ -138,7 +139,7 @@ class CartItemSerializerTestCase(TestCase):
         self.assertEqual(str(errors['quantity'][0]), "Ensure this value is greater than or equal to 1.")
 
         # Success
-        product = reverse('product-detail', kwargs={'pk': self.product.pk})
+        product = reverse('product-detail', kwargs={'pk': self.product1.pk})
         cart = reverse('cart-detail', kwargs={'pk': self.cart.pk})
         data = {
             "quantity": 1,
@@ -156,6 +157,9 @@ class CartItemSerializerTestCase(TestCase):
         self.assertTrue(serializer.data['cart'], data['cart'])
         self.assertTrue(serializer.data['product'], data['product'])
         self.assertTrue(serializer.data['quantity'], data['quantity'])
+
+        serializer = CartItemSerializer(data=data, context={'request': mock_request})
+        self.assertFalse(serializer.is_valid())
 
 class OrderSerializerTestCase(TestCase):
     def setUp(self):

@@ -96,6 +96,8 @@ class CartItemViewSetTestCase(TestCase):
         self.cart2 = Cart.objects.create(session_key="132")
         self.cartItem2 = CartItem.objects.create(cart=self.cart2, product=self.product2, quantity=2)
 
+        self.product3 = Product.objects.create(name="Test Product 3", price=22.45, stock=8, is_active=True)
+
     def test_get_list(self):
         response = self.client.get('/api/cartitems/')
         self.assertEqual(response.status_code, 200)
@@ -117,7 +119,7 @@ class CartItemViewSetTestCase(TestCase):
         response = self.client.post('/api/cartitems/')
         self.assertEqual(response.status_code, 400)
 
-        product = reverse('product-detail', kwargs={'pk': self.product1.pk})
+        product = reverse('product-detail', kwargs={'pk': self.product3.pk})
         data = {
             "quantity": 1,
             "product": product,
@@ -125,13 +127,13 @@ class CartItemViewSetTestCase(TestCase):
 
         response = self.client.post('/api/cartitems/', data=data)
         self.assertEqual(response.status_code, 400)
-        self.assertEqual(response.json()['msg'], 'Create your cart first')
+        self.assertEqual(response.json()['msg'], 'Create your cart first.')
 
         self.client.get('/api/carts/')
 
         response = self.client.post('/api/cartitems/', data=data)
         self.assertEqual(response.status_code, 201)
-        self.assertEqual(response.json()['product'], f'http://testserver/api/products/{self.cartItem1.product.pk}/')
+        self.assertEqual(response.json()['product'], f'http://testserver/api/products/{self.product3.pk}/')
         self.assertTrue(response.json()['cart'])
 
     def test_put(self):

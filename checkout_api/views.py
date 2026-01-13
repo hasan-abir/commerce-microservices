@@ -10,6 +10,7 @@ from checkout_api.tasks import placeorder_task
 from rest_framework.exceptions import ValidationError
 from rest_framework import serializers
 from drf_spectacular.utils import extend_schema, inline_serializer, extend_schema_view
+from django.urls import reverse
 import logging
 
 logger = logging.getLogger(__name__)
@@ -59,7 +60,24 @@ class CartItemViewSet(viewsets.ModelViewSet):
         methods=['POST']
     )
     def create(self, request, *args, **kwargs):
-        return super().create(request, args, kwargs)
+        session_key = request.session.session_key
+
+        if not session_key:
+            return Response({'msg': 'Create your cart first.'}, status=400)
+
+        cart = Cart.objects.get(session_key=session_key)
+        cart_url = reverse('cart-detail', kwargs={'pk': cart.pk})
+
+        data = request.data.copy()
+
+        data['cart'] = cart_url 
+
+        serializer = self.get_serializer(data=data)
+
+        serializer.is_valid(raise_exception=True)
+        
+        self.perform_create(serializer)
+        return Response(serializer.data, status=201)
     
     @extend_schema(
         request=CartItemRequestSerializer, 

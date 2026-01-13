@@ -28,7 +28,7 @@ def placeorder_service(data):
             for item in cartItems:
                 OrderItem.objects.create(order=order, original_product_id=item.product.pk, product_name=item.product.name, unit_price=item.product.price, quantity=item.quantity)
 
-                item_summary_list.append(f"- {item.product.name} (x{item.quantity})")
+                item_summary_list.append(f"- {item.product.name} ({item.product.price} x{item.quantity})")
 
             cartItems.delete()
 
