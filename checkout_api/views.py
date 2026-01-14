@@ -154,15 +154,15 @@ class OrderViewSet(viewsets.ViewSet):
                             product.stock = F('stock') - item.quantity
                             product.save()
                             
-                            data['session_key'] = session_key
-
                             cart = Cart.objects.get(session_key=session_key)
                             cart.status = Cart.PROCESSING
                             cart.save()
-
-                            placeorder_task.delay(data)
                         else:
                             return Response({'msg': f'{product.name}: Out of stock'}, status=400)
+            
+            data['session_key'] = session_key
+
+            placeorder_task.delay(data)
             
             return Response({'msg': "Success! We've accepted your order request and are dispatching the products now."}, status=200)
         except Exception as e:

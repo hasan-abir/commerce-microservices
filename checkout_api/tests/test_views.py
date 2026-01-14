@@ -216,8 +216,10 @@ class OrderViewSetTestCase(TestCase):
         self.assertEqual(response.json()['msg'], 'Add items to your cart first.')
 
         product = Product.objects.create(name="Test Product 1", price=22.45, stock=8, is_active=True)
+        product1 = Product.objects.create(name="Test Product 2", price=22.45, stock=8, is_active=True)
         cart = Cart.objects.first()
         cartItem = CartItem.objects.create(cart=cart, product=product, quantity=2)
+        cartItem2 = CartItem.objects.create(cart=cart, product=product1, quantity=1)
 
         response = self.client.post('/api/orders/', data={})
         self.assertEqual(response.status_code, 400)
