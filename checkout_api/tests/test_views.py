@@ -131,6 +131,16 @@ class CartItemViewSetTestCase(TestCase):
 
         self.client.get('/api/carts/')
 
+        self.product3.stock = 0
+        self.product3.save()
+
+        response = self.client.post('/api/cartitems/', data=data)
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.json()['msg'], f'{self.product3.name}: Out of stock')
+
+        self.product3.stock = 1
+        self.product3.save()
+
         response = self.client.post('/api/cartitems/', data=data)
         self.assertEqual(response.status_code, 201)
         self.assertEqual(response.json()['product'], f'http://testserver/api/products/{self.product3.pk}/')

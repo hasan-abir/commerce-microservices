@@ -60,12 +60,51 @@ class CartItemViewSet(viewsets.ModelViewSet):
         methods=['POST']
     )
     def create(self, request, *args, **kwargs):
+        try:
+            session_key = request.session.session_key
+
+            if not session_key:
+                return Response({'msg': 'Create your cart first.'}, status=400)
+
+            with transaction.atomic(): 
+                product_id = int(request.data['product'].split('/products')[-1].strip("/"))
+
+                msg = checkOutofStock(session_key, product_id, int(request.data['quantity']))
+
+                if msg:
+                    return Response({'msg': msg}, status=400)
+            
+            cart = Cart.objects.get(session_key=session_key)
+
+            cart_url = reverse('cart-detail', kwargs={'pk': cart.pk})
+
+            data = request.data.copy()
+
+            data['cart'] = cart_url 
+
+            serializer = self.get_serializer(data=data)
+
+            serializer.is_valid(raise_exception=True)
+            
+            self.perform_create(serializer)
+            return Response(serializer.data, status=201)
+        except Exception as e:
+            # exc_info is to trace the error
+            logger.error(f"Order failed for session {session_key}: {e}", exc_info=True)
+            raise e
+
         session_key = request.session.session_key
 
         if not session_key:
             return Response({'msg': 'Create your cart first.'}, status=400)
-
+        
         cart = Cart.objects.get(session_key=session_key)
+
+        cartItems = CartItem.objects.filter(cart__session_key=session_key)
+
+        if len(cartItems) < 1:
+            return Response({'msg': 'Add items to your cart first.'}, status=400)
+
         cart_url = reverse('cart-detail', kwargs={'pk': cart.pk})
 
         data = request.data.copy()
@@ -146,19 +185,10 @@ class OrderViewSet(viewsets.ViewSet):
         try:
             with transaction.atomic(): 
                 for item in cartItems:
-                    # Will allow rolling back db changes if the service crashes
-                        product = Product.objects.select_for_update().get(id=item.product.id)
+                    msg = checkOutofStock(session_key, item.product.id, item.quantity)
 
-                        if product.stock >= item.quantity:
-                            # F() is to get the value straight from DB and not store it in Python's memory
-                            product.stock = F('stock') - item.quantity
-                            product.save()
-                            
-                            cart = Cart.objects.get(session_key=session_key)
-                            cart.status = Cart.PROCESSING
-                            cart.save()
-                        else:
-                            return Response({'msg': f'{product.name}: Out of stock'}, status=400)
+                    if msg:
+                        return Response({'msg': msg}, status=400)
             
             data['session_key'] = session_key
 
@@ -180,3 +210,19 @@ class OrderItemViewSet(viewsets.ViewSet):
         serializer = OrderItemSerializer(order_item, context={'request': request})
 
         return Response(serializer.data, status=200)
+    
+def checkOutofStock(session_key, product_id, quantity):
+    product = get_object_or_404(Product.objects.select_for_update(), id=product_id)
+
+    if product.stock >= quantity:
+        # F() is to get the value straight from DB and not store it in Python's memory
+        product.stock = F('stock') - quantity
+        product.save()
+        
+        cart = Cart.objects.get(session_key=session_key)
+        cart.status = Cart.PROCESSING
+        cart.save()
+
+        return ""
+    else:
+        return f'{product.name}: Out of stock'
