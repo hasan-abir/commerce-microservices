@@ -69,10 +69,10 @@ class CartItemViewSet(viewsets.ModelViewSet):
             with transaction.atomic(): 
                 product_id = int(request.data['product'].split('/products')[-1].strip("/"))
 
-                msg = checkOutofStock(session_key, product_id, int(request.data['quantity']))
+                error = checkOutofStock(session_key, product_id, int(request.data['quantity']))
 
-                if msg:
-                    return Response({'msg': msg}, status=400)
+                if error is not None:
+                    return Response(error['body'], status=error['status'])
             
             cart = Cart.objects.get(session_key=session_key)
 
@@ -92,31 +92,6 @@ class CartItemViewSet(viewsets.ModelViewSet):
             # exc_info is to trace the error
             logger.error(f"Order failed for session {session_key}: {e}", exc_info=True)
             raise e
-
-        session_key = request.session.session_key
-
-        if not session_key:
-            return Response({'msg': 'Create your cart first.'}, status=400)
-        
-        cart = Cart.objects.get(session_key=session_key)
-
-        cartItems = CartItem.objects.filter(cart__session_key=session_key)
-
-        if len(cartItems) < 1:
-            return Response({'msg': 'Add items to your cart first.'}, status=400)
-
-        cart_url = reverse('cart-detail', kwargs={'pk': cart.pk})
-
-        data = request.data.copy()
-
-        data['cart'] = cart_url 
-
-        serializer = self.get_serializer(data=data)
-
-        serializer.is_valid(raise_exception=True)
-        
-        self.perform_create(serializer)
-        return Response(serializer.data, status=201)
     
     @extend_schema(
         request=CartItemRequestSerializer, 
@@ -185,10 +160,10 @@ class OrderViewSet(viewsets.ViewSet):
         try:
             with transaction.atomic(): 
                 for item in cartItems:
-                    msg = checkOutofStock(session_key, item.product.id, item.quantity)
+                    error = checkOutofStock(session_key, item.product.id, item.quantity)
 
-                    if msg:
-                        return Response({'msg': msg}, status=400)
+                    if error is not None:
+                        return Response(error['body'], status=error['status'])
             
             data['session_key'] = session_key
 
@@ -212,7 +187,16 @@ class OrderItemViewSet(viewsets.ViewSet):
         return Response(serializer.data, status=200)
     
 def checkOutofStock(session_key, product_id, quantity):
-    product = get_object_or_404(Product.objects.select_for_update(), id=product_id)
+    product = Product.objects.select_for_update().filter(id=product_id).first()
+
+    if product is None:
+        return {
+            'body': {
+                'msg': 'Product not found.',
+            },
+            'status': 404
+        }
+
 
     if product.stock >= quantity:
         # F() is to get the value straight from DB and not store it in Python's memory
@@ -223,6 +207,12 @@ def checkOutofStock(session_key, product_id, quantity):
         cart.status = Cart.PROCESSING
         cart.save()
 
-        return ""
+        return None
     else:
-        return f'{product.name}: Out of stock'
+        return {
+            'body': {
+                'msg': f'{product.name}: Out of stock',
+            },
+            'status': 400
+        }
+    

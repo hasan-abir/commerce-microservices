@@ -120,6 +120,7 @@ class CartItemViewSetTestCase(TestCase):
         self.assertEqual(response.status_code, 400)
 
         product = reverse('product-detail', kwargs={'pk': self.product3.pk})
+
         data = {
             "quantity": 1,
             "product": product,
@@ -131,8 +132,17 @@ class CartItemViewSetTestCase(TestCase):
 
         self.client.get('/api/carts/')
 
+        fake_product = reverse('product-detail', kwargs={'pk': 123})
+        data['product'] = fake_product
+
+        response = self.client.post('/api/cartitems/', data=data)
+        self.assertEqual(response.status_code, 404)
+        self.assertEqual(response.json()['msg'], 'Product not found.')
+
         self.product3.stock = 0
         self.product3.save()
+
+        data['product'] = product
 
         response = self.client.post('/api/cartitems/', data=data)
         self.assertEqual(response.status_code, 400)
@@ -229,7 +239,7 @@ class OrderViewSetTestCase(TestCase):
         product1 = Product.objects.create(name="Test Product 2", price=22.45, stock=8, is_active=True)
         cart = Cart.objects.first()
         cartItem = CartItem.objects.create(cart=cart, product=product, quantity=2)
-        cartItem2 = CartItem.objects.create(cart=cart, product=product1, quantity=1)
+        CartItem.objects.create(cart=cart, product=product1, quantity=1)
 
         response = self.client.post('/api/orders/', data={})
         self.assertEqual(response.status_code, 400)
@@ -241,6 +251,7 @@ class OrderViewSetTestCase(TestCase):
             'shipping_zip': '12345'}
         product.stock = 0
         product.save()
+
         response = self.client.post('/api/orders/', data=data)
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.json()['msg'], f"{product.name}: Out of stock")
