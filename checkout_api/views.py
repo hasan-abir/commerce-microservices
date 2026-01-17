@@ -61,10 +61,10 @@ class CartItemViewSet(viewsets.ModelViewSet):
     )
     def create(self, request, *args, **kwargs):
         try:
-            session_key = request.session.session_key
+            session_key = checkSessionKey(request)
 
-            if not session_key:
-                return Response({'msg': 'Create your cart first.'}, status=400)
+            if not isinstance(session_key, str):
+                return Response(session_key['body'], status=session_key['status'])
 
             with transaction.atomic(): 
                 product_id = int(request.data['product'].split('/products')[-1].strip("/"))
@@ -110,11 +110,11 @@ class CartItemViewSet(viewsets.ModelViewSet):
         return super().partial_update(request, *args, **kwargs)
 
     def perform_create(self, serializer):
-        session_key = self.request.session.session_key
+        session_key = checkSessionKey(self.request)
 
-        if not session_key:
-            raise ValidationError({'msg': 'Create your cart first'})
-
+        if not isinstance(session_key, str):
+            raise ValidationError({'msg': session_key['body']['msg']})
+        
         cart = get_object_or_404(Cart, session_key=session_key)
 
         serializer.save(cart=cart)
@@ -141,10 +141,10 @@ class OrderViewSet(viewsets.ViewSet):
         methods=['POST']
     )
     def create(self, request):
-        session_key = request.session.session_key
+        session_key = checkSessionKey(request)
 
-        if not session_key:
-            return Response({'msg': 'Create your cart first.'}, status=400)
+        if not isinstance(session_key, str):
+            return Response(session_key['body'], session_key['status'])
 
         cartItems = CartItem.objects.filter(cart__session_key=session_key)
 
@@ -163,6 +163,9 @@ class OrderViewSet(viewsets.ViewSet):
                     error = checkOutofStock(session_key, item.product.id, item.quantity)
 
                     if error is not None:
+                        if error['status'] is 400:
+                            item.delete()
+
                         return Response(error['body'], status=error['status'])
             
             data['session_key'] = session_key
@@ -216,3 +219,15 @@ def checkOutofStock(session_key, product_id, quantity):
             'status': 400
         }
     
+def checkSessionKey (request):
+    session_key = request.session.session_key
+
+    if session_key:
+        return session_key;
+    else:
+        return {
+            'body': {
+                'msg': 'Create your cart first.',
+            },
+            'status': 400
+        }
