@@ -136,8 +136,8 @@ class CartItemViewSetTestCase(TestCase):
         data['product'] = fake_product
 
         response = self.client.post('/api/cartitems/', data=data)
-        self.assertEqual(response.status_code, 404)
-        self.assertEqual(response.json()['msg'], 'Product not found.')
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.json()['product'], ['Invalid hyperlink - Object does not exist.'])
 
         self.product3.stock = 0
         self.product3.save()

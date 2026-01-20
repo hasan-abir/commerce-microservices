@@ -65,14 +65,6 @@ class CartItemViewSet(viewsets.ModelViewSet):
 
             if not isinstance(session_key, str):
                 return Response(session_key['body'], status=session_key['status'])
-
-            with transaction.atomic(): 
-                product_id = int(request.data['product'].split('/products')[-1].strip("/"))
-
-                error = checkOutofStock(session_key, product_id, int(request.data['quantity']))
-
-                if error is not None:
-                    return Response(error['body'], status=error['status'])
             
             cart = Cart.objects.get(session_key=session_key)
 
@@ -85,6 +77,14 @@ class CartItemViewSet(viewsets.ModelViewSet):
             serializer = self.get_serializer(data=data)
 
             serializer.is_valid(raise_exception=True)
+
+            with transaction.atomic(): 
+                product_id = int(request.data['product'].split('/products')[-1].strip("/"))
+
+                error = checkOutofStock(session_key, product_id, int(request.data['quantity']))
+
+                if error is not None:
+                    return Response(error['body'], status=error['status'])
             
             self.perform_create(serializer)
             return Response(serializer.data, status=201)
