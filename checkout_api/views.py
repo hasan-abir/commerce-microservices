@@ -61,6 +61,12 @@ class CartItemViewSet(viewsets.ModelViewSet):
     )
     def create(self, request, *args, **kwargs):
         try:
+            idemotencyError = checkIdempotency(request)
+
+            if idemotencyError:
+                return Response(idemotencyError['body'], status=idemotencyError['status'])
+
+
             session_key = checkSessionKey(request)
 
             if not isinstance(session_key, str):
@@ -141,6 +147,11 @@ class OrderViewSet(viewsets.ViewSet):
         methods=['POST']
     )
     def create(self, request):
+        idemotencyError = checkIdempotency(request)
+
+        if idemotencyError:
+            return Response(idemotencyError['body'], status=idemotencyError['status'])
+
         session_key = checkSessionKey(request)
 
         if not isinstance(session_key, str):
@@ -150,7 +161,7 @@ class OrderViewSet(viewsets.ViewSet):
 
         if len(cartItems) < 1:
             return Response({'msg': 'Add items to your cart first.'}, status=400)
-        
+                    
         data = request.data.copy()
         serializer = OrderDataSerializer(data=data)
 
@@ -231,3 +242,12 @@ def checkSessionKey (request):
             },
             'status': 400
         }
+    
+def checkIdempotency(request):
+    if not 'Idempotency-Key' in request.headers:
+        return {
+            "body": {'msg': "Specify a 'Idempotency-Key' attribute in the headers with a UUID"},
+            "status": 400
+        }
+
+    return None;

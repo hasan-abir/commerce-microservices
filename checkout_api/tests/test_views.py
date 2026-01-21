@@ -128,6 +128,10 @@ class CartItemViewSetTestCase(TestCase):
 
         response = self.client.post('/api/cartitems/', data=data)
         self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.json()['msg'], "Specify a 'Idempotency-Key' attribute in the headers with a UUID")
+
+        response = self.client.post('/api/cartitems/', data=data, headers={'Idempotency-Key': 'test-id-123'})
+        self.assertEqual(response.status_code, 400)
         self.assertEqual(response.json()['msg'], 'Create your cart first.')
 
         self.client.get('/api/carts/')
@@ -135,7 +139,7 @@ class CartItemViewSetTestCase(TestCase):
         fake_product = reverse('product-detail', kwargs={'pk': 123})
         data['product'] = fake_product
 
-        response = self.client.post('/api/cartitems/', data=data)
+        response = self.client.post('/api/cartitems/', data=data, headers={'Idempotency-Key': 'test-id-123'})
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.json()['product'], ['Invalid hyperlink - Object does not exist.'])
 
@@ -144,14 +148,14 @@ class CartItemViewSetTestCase(TestCase):
 
         data['product'] = product
 
-        response = self.client.post('/api/cartitems/', data=data)
+        response = self.client.post('/api/cartitems/', data=data, headers={'Idempotency-Key': 'test-id-123'})
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.json()['msg'], f'{self.product3.name}: Out of stock')
 
         self.product3.stock = 1
         self.product3.save()
 
-        response = self.client.post('/api/cartitems/', data=data)
+        response = self.client.post('/api/cartitems/', data=data, headers={'Idempotency-Key': 'test-id-123'})
         self.assertEqual(response.status_code, 201)
         self.assertEqual(response.json()['product'], f'http://testserver/api/products/{self.product3.pk}/')
         self.assertTrue(response.json()['cart'])
@@ -225,13 +229,17 @@ class OrderViewSetTestCase(TestCase):
     def test_post(self, mock_task):
         url = '/api/orders/'
 
-        response = self.client.post('/api/orders/')
+        response = self.client.post(url)
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.json()['msg'], "Specify a 'Idempotency-Key' attribute in the headers with a UUID")
+
+        response = self.client.post(url, headers={'Idempotency-Key': 'test-id-123'})
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.json()['msg'], 'Create your cart first.')
 
         self.client.get('/api/carts/')
 
-        response = self.client.post('/api/orders/')
+        response = self.client.post(url, headers={'Idempotency-Key': 'test-id-123'})
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.json()['msg'], 'Add items to your cart first.')
 
@@ -241,7 +249,7 @@ class OrderViewSetTestCase(TestCase):
         CartItem.objects.create(cart=cart, product=product, quantity=2)
         CartItem.objects.create(cart=cart, product=product1, quantity=1)
 
-        response = self.client.post('/api/orders/', data={})
+        response = self.client.post(url, data={}, headers={'Idempotency-Key': 'test-id-123'})
         self.assertEqual(response.status_code, 400)
 
         data = {'contact_email': 'johndoe@example.com',
@@ -252,7 +260,7 @@ class OrderViewSetTestCase(TestCase):
         product.stock = 0
         product.save()
 
-        response = self.client.post('/api/orders/', data=data)
+        response = self.client.post(url, data=data, headers={'Idempotency-Key': 'test-id-123'})
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.json()['msg'], f"{product.name}: Out of stock")
 
@@ -260,7 +268,7 @@ class OrderViewSetTestCase(TestCase):
 
         self.assertEqual(len(cartItems), 1)
 
-        response = self.client.post('/api/orders/', data=data)
+        response = self.client.post(url, data=data, headers={'Idempotency-Key': 'test-id-123'})
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()['msg'], "Success! We've accepted your order request and are dispatching the products now.")
         mock_task.delay.assert_called_once()
