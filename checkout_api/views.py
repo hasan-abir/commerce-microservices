@@ -69,7 +69,7 @@ class CartItemViewSet(viewsets.ModelViewSet):
             if not isinstance(session_key, str):
                 return Response(session_key['body'], status=session_key['status'])
             
-            idemotencyError = checkIdempotency(request, session_key)
+            idemotencyError = checkIdempotency(request, session_key, expiration=30)
 
             if idemotencyError:
                 return Response(idemotencyError['body'], status=idemotencyError['status'])
@@ -155,7 +155,7 @@ class OrderViewSet(viewsets.ViewSet):
         if not isinstance(session_key, str):
             return Response(session_key['body'], session_key['status'])
         
-        idemotencyError = checkIdempotency(request, session_key)
+        idemotencyError = checkIdempotency(request, session_key, expiration=3600)
 
         if idemotencyError:
             return Response(idemotencyError['body'], status=idemotencyError['status'])
@@ -246,7 +246,7 @@ def checkSessionKey (request):
             'status': 400
         }
     
-def checkIdempotency(request, session_key):
+def checkIdempotency(request, session_key, expiration):
     if not 'Idempotency-Key' in request.headers:
         return {
             "body": {'msg': "Specify a 'Idempotency-Key' attribute in the headers with a UUID"},
@@ -256,7 +256,7 @@ def checkIdempotency(request, session_key):
     idem_key = request.headers.get('Idempotency-Key')
 
     payload = json.dumps({'session_key': session_key, 'body': str(request.body)})
-    success = rd_instance.set(idem_key, payload, nx=True, ex=3600)
+    success = rd_instance.set(idem_key, payload, nx=True, ex=expiration)
 
     if not success:
         return {"body": {'msg': "Duplicate request detected"}, "status": 409}
