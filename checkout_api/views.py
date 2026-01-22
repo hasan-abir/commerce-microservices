@@ -11,9 +11,12 @@ from rest_framework.exceptions import ValidationError
 from rest_framework import serializers
 from drf_spectacular.utils import extend_schema, inline_serializer, extend_schema_view
 from django.urls import reverse
+import redis
+import json
 import logging
 
 logger = logging.getLogger(__name__)
+rd_instance = redis.Redis(host='redis', port=6379, decode_responses=True)
 
 class ProductViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin,viewsets.GenericViewSet):
     serializer_class = ProductSerializer
@@ -61,16 +64,15 @@ class CartItemViewSet(viewsets.ModelViewSet):
     )
     def create(self, request, *args, **kwargs):
         try:
-            idemotencyError = checkIdempotency(request)
-
-            if idemotencyError:
-                return Response(idemotencyError['body'], status=idemotencyError['status'])
-
-
             session_key = checkSessionKey(request)
 
             if not isinstance(session_key, str):
                 return Response(session_key['body'], status=session_key['status'])
+            
+            idemotencyError = checkIdempotency(request, session_key)
+
+            if idemotencyError:
+                return Response(idemotencyError['body'], status=idemotencyError['status'])
             
             cart = Cart.objects.get(session_key=session_key)
 
@@ -147,15 +149,16 @@ class OrderViewSet(viewsets.ViewSet):
         methods=['POST']
     )
     def create(self, request):
-        idemotencyError = checkIdempotency(request)
-
-        if idemotencyError:
-            return Response(idemotencyError['body'], status=idemotencyError['status'])
 
         session_key = checkSessionKey(request)
 
         if not isinstance(session_key, str):
             return Response(session_key['body'], session_key['status'])
+        
+        idemotencyError = checkIdempotency(request, session_key)
+
+        if idemotencyError:
+            return Response(idemotencyError['body'], status=idemotencyError['status'])
 
         cartItems = CartItem.objects.filter(cart__session_key=session_key)
 
@@ -174,7 +177,7 @@ class OrderViewSet(viewsets.ViewSet):
                     error = checkOutofStock(session_key, item.product.id, item.quantity)
 
                     if error is not None:
-                        if error['status'] is 400:
+                        if error['status'] == 400:
                             item.delete()
 
                         return Response(error['body'], status=error['status'])
@@ -243,11 +246,19 @@ def checkSessionKey (request):
             'status': 400
         }
     
-def checkIdempotency(request):
+def checkIdempotency(request, session_key):
     if not 'Idempotency-Key' in request.headers:
         return {
             "body": {'msg': "Specify a 'Idempotency-Key' attribute in the headers with a UUID"},
             "status": 400
         }
+    
+    idem_key = request.headers.get('Idempotency-Key')
 
+    payload = json.dumps({'session_key': session_key, 'body': str(request.body)})
+    success = rd_instance.set(idem_key, payload, nx=True, ex=3600)
+
+    if not success:
+        return {"body": {'msg': "Duplicate request detected"}, "status": 409}
+    
     return None;

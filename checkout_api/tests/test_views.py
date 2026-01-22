@@ -6,6 +6,9 @@ from django.urls import reverse
 from unittest.mock import patch
 from django.http import QueryDict
 from django.test import TransactionTestCase
+import redis
+
+rd_instance = redis.Redis(host='redis', port=6379, decode_responses=True)
 
 class ProductViewTestCase(TestCase):
     def setUp(self):
@@ -30,9 +33,6 @@ class ProductViewTestCase(TestCase):
         self.assertEqual(response.json()['results'][0]['name'], self.product.name)
         self.assertEqual(response.json()['results'][1]['name'], product2.name)
         self.assertEqual(response.json()['results'][2]['name'], product3.name)
-        # self.assertEqual(response.json()['name'], self.product.name)
-        # self.assertEqual(response.json()['price'], str(self.product.price))
-        # self.assertEqual(response.json()['is_active'], self.product.is_active)
 
 class CartViewTestCase(TransactionTestCase):
     reset_sequences = True
@@ -86,6 +86,7 @@ class CartViewTestCase(TransactionTestCase):
 
 class CartItemViewSetTestCase(TestCase):
     def setUp(self):
+        rd_instance.flushdb()
         self.client = Client()
 
         self.product1 = Product.objects.create(name="Test Product", price=22.45, stock=8, is_active=True)
@@ -128,13 +129,13 @@ class CartItemViewSetTestCase(TestCase):
 
         response = self.client.post('/api/cartitems/', data=data)
         self.assertEqual(response.status_code, 400)
-        self.assertEqual(response.json()['msg'], "Specify a 'Idempotency-Key' attribute in the headers with a UUID")
-
-        response = self.client.post('/api/cartitems/', data=data, headers={'Idempotency-Key': 'test-id-123'})
-        self.assertEqual(response.status_code, 400)
         self.assertEqual(response.json()['msg'], 'Create your cart first.')
 
         self.client.get('/api/carts/')
+
+        response = self.client.post('/api/cartitems/', data=data)
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.json()['msg'], "Specify a 'Idempotency-Key' attribute in the headers with a UUID")
 
         fake_product = reverse('product-detail', kwargs={'pk': 123})
         data['product'] = fake_product
@@ -143,19 +144,23 @@ class CartItemViewSetTestCase(TestCase):
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.json()['product'], ['Invalid hyperlink - Object does not exist.'])
 
+        response = self.client.post('/api/cartitems/', data=data, headers={'Idempotency-Key': 'test-id-123'})
+        self.assertEqual(response.status_code, 409)
+        self.assertEqual(response.json()['msg'], "Duplicate request detected")
+
         self.product3.stock = 0
         self.product3.save()
 
         data['product'] = product
 
-        response = self.client.post('/api/cartitems/', data=data, headers={'Idempotency-Key': 'test-id-123'})
+        response = self.client.post('/api/cartitems/', data=data, headers={'Idempotency-Key': 'test-id-124'})
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.json()['msg'], f'{self.product3.name}: Out of stock')
 
         self.product3.stock = 1
         self.product3.save()
 
-        response = self.client.post('/api/cartitems/', data=data, headers={'Idempotency-Key': 'test-id-123'})
+        response = self.client.post('/api/cartitems/', data=data, headers={'Idempotency-Key': 'test-id-125'})
         self.assertEqual(response.status_code, 201)
         self.assertEqual(response.json()['product'], f'http://testserver/api/products/{self.product3.pk}/')
         self.assertTrue(response.json()['cart'])
@@ -204,6 +209,7 @@ class CartItemViewSetTestCase(TestCase):
 
 class OrderViewSetTestCase(TestCase):
     def setUp(self):
+        rd_instance.flushdb()
         self.client = Client()
 
         self.order = Order.objects.create(status=Order.PAID,
@@ -231,17 +237,21 @@ class OrderViewSetTestCase(TestCase):
 
         response = self.client.post(url)
         self.assertEqual(response.status_code, 400)
-        self.assertEqual(response.json()['msg'], "Specify a 'Idempotency-Key' attribute in the headers with a UUID")
-
-        response = self.client.post(url, headers={'Idempotency-Key': 'test-id-123'})
-        self.assertEqual(response.status_code, 400)
         self.assertEqual(response.json()['msg'], 'Create your cart first.')
 
         self.client.get('/api/carts/')
 
+        response = self.client.post(url)
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.json()['msg'], "Specify a 'Idempotency-Key' attribute in the headers with a UUID")
+
         response = self.client.post(url, headers={'Idempotency-Key': 'test-id-123'})
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.json()['msg'], 'Add items to your cart first.')
+
+        response = self.client.post(url, headers={'Idempotency-Key': 'test-id-123'})
+        self.assertEqual(response.status_code, 409)
+        self.assertEqual(response.json()['msg'], "Duplicate request detected")
 
         product = Product.objects.create(name="Test Product 1", price=22.45, stock=8, is_active=True)
         product1 = Product.objects.create(name="Test Product 2", price=22.45, stock=8, is_active=True)
@@ -249,7 +259,7 @@ class OrderViewSetTestCase(TestCase):
         CartItem.objects.create(cart=cart, product=product, quantity=2)
         CartItem.objects.create(cart=cart, product=product1, quantity=1)
 
-        response = self.client.post(url, data={}, headers={'Idempotency-Key': 'test-id-123'})
+        response = self.client.post(url, data={}, headers={'Idempotency-Key': 'test-id-124'})
         self.assertEqual(response.status_code, 400)
 
         data = {'contact_email': 'johndoe@example.com',
@@ -260,7 +270,7 @@ class OrderViewSetTestCase(TestCase):
         product.stock = 0
         product.save()
 
-        response = self.client.post(url, data=data, headers={'Idempotency-Key': 'test-id-123'})
+        response = self.client.post(url, data=data, headers={'Idempotency-Key': 'test-id-125'})
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.json()['msg'], f"{product.name}: Out of stock")
 
@@ -268,7 +278,7 @@ class OrderViewSetTestCase(TestCase):
 
         self.assertEqual(len(cartItems), 1)
 
-        response = self.client.post(url, data=data, headers={'Idempotency-Key': 'test-id-123'})
+        response = self.client.post(url, data=data, headers={'Idempotency-Key': 'test-id-126'})
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()['msg'], "Success! We've accepted your order request and are dispatching the products now.")
         mock_task.delay.assert_called_once()
