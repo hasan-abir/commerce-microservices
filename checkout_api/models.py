@@ -9,6 +9,9 @@ class Product(models.Model):
     stock = models.IntegerField()
     is_active = models.BooleanField()
 
+    class Meta:
+        ordering = ['-price']
+
     def __str__(self):
         return self.name
 
