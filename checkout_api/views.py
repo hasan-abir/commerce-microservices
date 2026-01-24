@@ -4,7 +4,7 @@ from django.db.models import F
 from rest_framework import viewsets, mixins
 from rest_framework.response import Response
 from django.shortcuts import get_object_or_404
-from checkout_api.serializers import CartSerializer, CartItemSerializer, CartItemRequestSerializer, ProductSerializer, OrderSerializer, OrderItemSerializer, OrderDataSerializer
+from checkout_api.serializers import CartSerializer, CartItemSerializer, CartItemRequestSerializer, ProductSerializer, OrderSerializer, OrderItemSerializer, OrderDataSerializer, PaymentSerializer
 from checkout_api.models import Cart, Product, CartItem, Order, OrderItem
 from checkout_api.tasks import placeorder_task
 from rest_framework.exceptions import ValidationError
@@ -13,10 +13,14 @@ from drf_spectacular.utils import extend_schema, inline_serializer, extend_schem
 from django.urls import reverse
 import redis
 import json
+import stripe
+import os
 import logging
 
 logger = logging.getLogger(__name__)
 rd_instance = redis.Redis(host='redis', port=6379, decode_responses=True)
+
+stripe.api_key = os.environ.get('STRIPE_SECRET_KEY') or ''
 
 class ProductViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin,viewsets.GenericViewSet):
     serializer_class = ProductSerializer
@@ -202,6 +206,26 @@ class OrderItemViewSet(viewsets.ViewSet):
         serializer = OrderItemSerializer(order_item, context={'request': request})
 
         return Response(serializer.data, status=200)
+    
+class PaymentViewSet(viewsets.ViewSet):
+    def post(self, request):
+        try:
+            serializer = PaymentSerializer(data=request.data)
+
+            if not serializer.is_valid():
+                return Response(serializer.errors, 400)
+
+            totals = serializer.totals 
+            intent = stripe.PaymentIntent.create(
+                amount=totals,
+                currency='usd',
+            )
+            return Response({
+                'clientSecret': intent['client_secret']
+            }, 200)
+        except Exception as e:
+             return Response({'msg': str(e)}), 403
+
     
 def checkOutofStock(session_key, product_id, quantity):
     product = Product.objects.select_for_update().filter(id=product_id).first()

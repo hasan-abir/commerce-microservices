@@ -85,3 +85,6 @@ class OrderDataSerializer(serializers.Serializer):
     shipping_zip = serializers.CharField(max_length=100)
     shipping_city = serializers.CharField(max_length=100)
     shipping_country = serializers.CharField(max_length=100)
+
+class PaymentSerializer(serializers.Serializer):
+    totals = serializers.IntegerField()
