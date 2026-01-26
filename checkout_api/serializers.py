@@ -87,4 +87,4 @@ class OrderDataSerializer(serializers.Serializer):
     shipping_country = serializers.CharField(max_length=100)
 
 class PaymentSerializer(serializers.Serializer):
-    totals = serializers.IntegerField()
+    total = serializers.DecimalField(max_digits=10, decimal_places=2, min_value=Decimal('0.01'))

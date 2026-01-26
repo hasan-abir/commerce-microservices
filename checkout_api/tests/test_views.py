@@ -327,4 +327,33 @@ class OrderItemViewSetTestCase(TestCase):
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()['unit_price'], str(self.order_item.unit_price))
+
+class PaymentViewSetTestCase(TestCase):
+    @patch("checkout_api.views.stripe.PaymentIntent.create")
+    def test_post(self, mock_stripe):
+        mock_stripe.return_value = {
+            'client_secret': '123',
+        }
+
+        url = '/api/payments/'
+
+        data = {
+            
+        }
+
+        response = self.client.post(url, data)
+
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.json()['total'][0], 'This field is required.')
+
+        data['total'] = 12.34
+
+        response = self.client.post(url, data)
+
+        self.assertEqual(response.status_code, 200)
+
+        mock_stripe.assert_called_once()
+
+        mock_stripe.assert_called_with(amount= str(data['total']),
+            currency= 'usd')
     

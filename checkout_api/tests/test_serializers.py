@@ -1,6 +1,6 @@
 from django.test import TestCase
 from checkout_api.models import Product, Cart, CartItem, Order, OrderItem
-from checkout_api.serializers import ProductSerializer, CartSerializer, CartItemSerializer, OrderSerializer, OrderItemSerializer, OrderDataSerializer
+from checkout_api.serializers import ProductSerializer, CartSerializer, CartItemSerializer, OrderSerializer, OrderItemSerializer, OrderDataSerializer, PaymentSerializer
 from decimal import *
 from django.urls import reverse
 from django.test.client import RequestFactory
@@ -385,4 +385,28 @@ class OrderDataSerializerTestCase(TestCase):
         data['shipping_zip'] = '12345'
         
         serializer = OrderDataSerializer(data=data)
+        self.assertTrue(serializer.is_valid())
+
+class PaymentSerializerTestCase(TestCase):
+    def test_instance_validation(self):
+        data = {}
+
+        serializer = PaymentSerializer(data=data)
+        self.assertFalse(serializer.is_valid())
+
+        errors = serializer.errors
+        self.assertEqual(str(errors['total'][0]), 'This field is required.')
+
+        data = {'total': 0.00}
+
+        serializer = PaymentSerializer(data=data)
+        
+        self.assertFalse(serializer.is_valid())
+
+        errors = serializer.errors
+        self.assertEqual(str(errors['total'][0]), 'Ensure this value is greater than or equal to 0.01.')
+
+        data['total'] = 12.34
+
+        serializer = PaymentSerializer(data=data)
         self.assertTrue(serializer.is_valid())

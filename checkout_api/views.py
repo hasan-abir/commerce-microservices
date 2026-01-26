@@ -173,7 +173,7 @@ class OrderViewSet(viewsets.ViewSet):
         serializer = OrderDataSerializer(data=data)
 
         if not serializer.is_valid():
-            return Response(serializer.errors, 400)
+            return Response(serializer.errors, status=400)
         
         try:
             with transaction.atomic(): 
@@ -208,23 +208,23 @@ class OrderItemViewSet(viewsets.ViewSet):
         return Response(serializer.data, status=200)
     
 class PaymentViewSet(viewsets.ViewSet):
-    def post(self, request):
+    def create(self, request):
         try:
             serializer = PaymentSerializer(data=request.data)
 
             if not serializer.is_valid():
-                return Response(serializer.errors, 400)
-
-            totals = serializer.totals 
+                return Response(serializer.errors, status=400)
+            
+            totals = request.data['total']
             intent = stripe.PaymentIntent.create(
                 amount=totals,
                 currency='usd',
             )
             return Response({
-                'clientSecret': intent['client_secret']
-            }, 200)
+                'clientSecret': intent['client_secret'],
+            }, status=200)
         except Exception as e:
-             return Response({'msg': str(e)}), 403
+             return Response({'msg': str(e)}, status=403)
 
     
 def checkOutofStock(session_key, product_id, quantity):
