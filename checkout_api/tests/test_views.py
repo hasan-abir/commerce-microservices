@@ -337,18 +337,20 @@ class PaymentViewSetTestCase(TestCase):
 
         url = '/api/payments/'
 
-        data = {
-            
-        }
+        data = {}
 
         response = self.client.post(url, data)
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.json()['msg'], "Specify a 'Idempotency-Key' attribute in the headers with a UUID")
 
+
+        response = self.client.post(url, data, headers={'Idempotency-Key': 'test-id-127'})
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.json()['total'][0], 'This field is required.')
 
         data['total'] = 12.34
 
-        response = self.client.post(url, data)
+        response = self.client.post(url, data, headers={'Idempotency-Key': 'test-id-128'})
 
         self.assertEqual(response.status_code, 200)
 

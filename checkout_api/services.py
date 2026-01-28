@@ -7,6 +7,7 @@ from decimal import *
 from django.utils import timezone
 from datetime import timedelta
 from mail_dispatch_api.services import sendmail_service
+import requests
 import logging
 
 logger = logging.getLogger(__name__)
@@ -36,6 +37,8 @@ def placeorder_service(data):
             cart.save()
 
             items_string = "\n".join(item_summary_list)
+
+            # request = requests.post('/api/payments/')
 
             sendmail_service({
                 'recipient': data['contact_email'],

@@ -210,6 +210,16 @@ class OrderItemViewSet(viewsets.ViewSet):
 class PaymentViewSet(viewsets.ViewSet):
     def create(self, request):
         try:
+            if not request.session.session_key:
+                request.session.save()
+
+            session_key = request.session.session_key
+
+            idemotencyError = checkIdempotency(request, session_key, 3600)
+
+            if idemotencyError:
+                return Response(idemotencyError['body'], status=idemotencyError['status'])
+
             serializer = PaymentSerializer(data=request.data)
 
             if not serializer.is_valid():
