@@ -8,6 +8,7 @@ from django.utils import timezone
 from datetime import timedelta
 from mail_dispatch_api.services import sendmail_service
 import requests
+import random
 import logging
 
 logger = logging.getLogger(__name__)
@@ -38,7 +39,13 @@ def placeorder_service(data):
 
             items_string = "\n".join(item_summary_list)
 
-            # request = requests.post('/api/payments/')
+            resp = requests.post(
+                    "http://127.0.0.1:8000/api/payments/",
+                    data={"total": str(order.total)},
+                    timeout=10,
+                    verify=True,
+                    headers={"Idempotency-Key": f"order-{order.pk}-{random.randint(1, 10000)}"})
+            resp.raise_for_status()
 
             sendmail_service({
                 'recipient': data['contact_email'],

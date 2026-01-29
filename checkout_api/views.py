@@ -234,6 +234,7 @@ class PaymentViewSet(viewsets.ViewSet):
                 'clientSecret': intent['client_secret'],
             }, status=200)
         except Exception as e:
+             print(str(e))
              return Response({'msg': str(e)}, status=403)
 
     
