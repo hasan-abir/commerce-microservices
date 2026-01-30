@@ -165,6 +165,11 @@ class CartItemViewSetTestCase(TestCase):
         self.assertEqual(response.json()['product'], f'http://testserver/api/products/{self.product3.pk}/')
         self.assertTrue(response.json()['cart'])
 
+        cart_item_saved = CartItem.objects.filter(product=self.product3.pk).first()
+
+        self.assertEqual(cart_item_saved.product.stock, self.product3.stock)
+
+
     def test_put(self):
         url = f'/api/cartitems/{self.cartItem1.pk}/'
 

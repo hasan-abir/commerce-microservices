@@ -178,7 +178,7 @@ class OrderViewSet(viewsets.ViewSet):
         try:
             with transaction.atomic(): 
                 for item in cartItems:
-                    error = checkOutofStock(session_key, item.product.id, item.quantity)
+                    error = checkOutofStock(session_key, item.product.id, item.quantity, True)
 
                     if error is not None:
                         if error['status'] == 400:
@@ -238,7 +238,7 @@ class PaymentViewSet(viewsets.ViewSet):
              return Response({'msg': str(e)}, status=403)
 
     
-def checkOutofStock(session_key, product_id, quantity):
+def checkOutofStock(session_key, product_id, quantity, mutate_cart = False):
     product = Product.objects.select_for_update().filter(id=product_id).first()
 
     if product is None:
@@ -251,13 +251,14 @@ def checkOutofStock(session_key, product_id, quantity):
 
 
     if product.stock >= quantity:
+        if mutate_cart:
         # F() is to get the value straight from DB and not store it in Python's memory
-        product.stock = F('stock') - quantity
-        product.save()
-        
-        cart = Cart.objects.get(session_key=session_key)
-        cart.status = Cart.PROCESSING
-        cart.save()
+            product.stock = F('stock') - quantity
+            product.save()
+            
+            cart = Cart.objects.get(session_key=session_key)
+            cart.status = Cart.PROCESSING
+            cart.save()
 
         return None
     else:
