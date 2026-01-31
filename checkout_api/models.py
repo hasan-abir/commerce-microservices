@@ -112,3 +112,29 @@ class OrderItem(models.Model):
 
     def __str__(self):
         return f"Order item for order: {self.order.order_number}"
+
+class PaymentIntent(models.Model):
+    PENDING = "PEN"
+    SUCCEEDED = "SUC"
+    FAILED = "FAI"
+    STATUS_CHOICES = {
+        PENDING: "Pending",
+        SUCCEEDED: "Succeeded",
+        FAILED: "Failed",
+    }
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    currency = models.CharField(max_length=100)
+    status = models.CharField(
+        max_length=3,
+        choices=STATUS_CHOICES,
+        default=PENDING,
+    )
+    order_id = models.CharField(max_length=100)
+    payment_intent_id = models.CharField(max_length=50, unique=True)
+    payment_method_id = models.CharField(max_length=50)
+
+    def __str__(self):
+        return f"Payment intent for order: {self.order_id}"

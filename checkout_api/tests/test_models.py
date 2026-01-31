@@ -1,5 +1,5 @@
 from django.test import TestCase
-from checkout_api.models import Product, Cart, CartItem, Order, OrderItem
+from checkout_api.models import Product, Cart, CartItem, Order, OrderItem, PaymentIntent
 from decimal import *
 
 class ProductTestCase(TestCase):
@@ -131,3 +131,23 @@ class OrderItemTestCase(TestCase):
 
         self.assertEqual(order_item.__str__(), f"Order item for order: {self.order.order_number}")
 
+class PaymentIntentTestCase(TestCase):
+    def setUp(self):
+        self.payment_intent = PaymentIntent.objects.create(status=PaymentIntent.PENDING, order_id='session_key_1234567890abcdef', payment_intent_id='979d37bd-4e19-4cb7-b589-c21d2c437f3b', payment_method_id='979d37bd-4e19-4cb7-b589-c21d2c437f3c', currency='usd', amount=1234)
+
+    def test_instance_is_properly_saved(self):
+        self.assertEqual(PaymentIntent.objects.count(), 1)
+        payment_intent = PaymentIntent.objects.get(payment_intent_id=self.payment_intent.payment_intent_id)
+
+        self.assertEqual(payment_intent.payment_method_id, self.payment_intent.payment_method_id)
+        self.assertEqual(payment_intent.order_id, self.payment_intent.order_id)
+        self.assertEqual(payment_intent.amount, self.payment_intent.amount)
+        self.assertEqual(payment_intent.currency, self.payment_intent.currency)
+        self.assertEqual(payment_intent.status, PaymentIntent.PENDING)
+        self.assertTrue(payment_intent.created_at)
+        self.assertTrue(payment_intent.updated_at)
+
+    def test_str_method(self):
+        payment_intent = PaymentIntent.objects.get(payment_intent_id=self.payment_intent.payment_intent_id)
+
+        self.assertEqual(payment_intent.__str__(), f"Payment intent for order: {self.payment_intent.order_id}")
