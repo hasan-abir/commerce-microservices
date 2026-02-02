@@ -1,5 +1,5 @@
 from rest_framework import serializers, validators
-from checkout_api.models import Product, Cart, CartItem, Order, OrderItem
+from checkout_api.models import Product, Cart, CartItem, Order, OrderItem, PaymentIntent
 from decimal import *
 
 class ProductSerializer(serializers.HyperlinkedModelSerializer):
@@ -88,3 +88,9 @@ class OrderDataSerializer(serializers.Serializer):
 
 class PaymentSerializer(serializers.Serializer):
     total = serializers.DecimalField(max_digits=10, decimal_places=2, min_value=Decimal('0.01'))
+
+class PaymentIntentSerializer(serializers.HyperlinkedModelSerializer):
+    amount = serializers.DecimalField(max_digits=10, decimal_places=2, min_value=Decimal('0.01'))
+    class Meta:
+        model = PaymentIntent
+        fields = '__all__'

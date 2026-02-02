@@ -1,6 +1,6 @@
 from django.test import TestCase
-from checkout_api.models import Product, Cart, CartItem, Order, OrderItem
-from checkout_api.serializers import ProductSerializer, CartSerializer, CartItemSerializer, OrderSerializer, OrderItemSerializer, OrderDataSerializer, PaymentSerializer
+from checkout_api.models import Product, Cart, CartItem, Order, OrderItem, PaymentIntent
+from checkout_api.serializers import ProductSerializer, CartSerializer, CartItemSerializer, OrderSerializer, OrderItemSerializer, OrderDataSerializer, PaymentSerializer, PaymentIntentSerializer
 from decimal import *
 from django.urls import reverse
 from django.test.client import RequestFactory
@@ -409,4 +409,46 @@ class PaymentSerializerTestCase(TestCase):
         data['total'] = 12.34
 
         serializer = PaymentSerializer(data=data)
+        self.assertTrue(serializer.is_valid())
+
+class PaymentIntentSerializerTestCase(TestCase):
+    def test_instance_validation(self):
+        data = {}
+
+        serializer = PaymentIntentSerializer(data=data)
+        self.assertFalse(serializer.is_valid())
+
+        errors = serializer.errors
+        self.assertEqual(str(errors['amount'][0]), 'This field is required.')
+        self.assertEqual(str(errors['currency'][0]), 'This field is required.')
+        self.assertEqual(str(errors['order_id'][0]), 'This field is required.')
+        self.assertEqual(str(errors['payment_intent_id'][0]), 'This field is required.')
+        self.assertEqual(str(errors['payment_method_id'][0]), 'This field is required.')
+
+        data['amount'] = 0.00
+
+        serializer = PaymentIntentSerializer(data=data)
+        
+        self.assertFalse(serializer.is_valid())
+
+        errors = serializer.errors
+        self.assertEqual(str(errors['amount'][0]), 'Ensure this value is greater than or equal to 0.01.')
+
+        data['status'] = "Somethin"
+
+        serializer = PaymentIntentSerializer(data=data)
+        
+        self.assertFalse(serializer.is_valid())
+
+        errors = serializer.errors
+        self.assertEqual(str(errors['status'][0]), f'"{data['status']}" is not a valid choice.')
+
+        data['amount'] = 12.34
+        data['status'] = PaymentIntent.SUCCEEDED
+        data['currency'] = "usd"
+        data['order_id'] = "123"
+        data['payment_intent_id'] = "123"
+        data['payment_method_id'] = "123"
+
+        serializer = PaymentIntentSerializer(data=data)
         self.assertTrue(serializer.is_valid())
