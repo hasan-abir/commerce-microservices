@@ -338,6 +338,8 @@ class PaymentViewSetTestCase(TestCase):
     def test_post(self, mock_stripe):
         mock_stripe.return_value = {
             'client_secret': '123',
+            'id': '321',
+            'payment_method': 'card'
         }
 
         url = '/api/payments/'

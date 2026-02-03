@@ -1,11 +1,11 @@
 from django.shortcuts import render
 from django.db import transaction
 from django.db.models import F
-from rest_framework import viewsets, mixins
+from rest_framework import viewsets, mixins, views
 from rest_framework.response import Response
 from django.shortcuts import get_object_or_404
-from checkout_api.serializers import CartSerializer, CartItemSerializer, CartItemRequestSerializer, ProductSerializer, OrderSerializer, OrderItemSerializer, OrderDataSerializer, PaymentSerializer
-from checkout_api.models import Cart, Product, CartItem, Order, OrderItem
+from checkout_api.serializers import CartSerializer, CartItemSerializer, CartItemRequestSerializer, ProductSerializer, OrderSerializer, OrderItemSerializer, OrderDataSerializer, PaymentSerializer, PaymentIntentSerializer
+from checkout_api.models import Cart, Product, CartItem, Order, OrderItem, PaymentIntent
 from checkout_api.tasks import placeorder_task
 from rest_framework.exceptions import ValidationError
 from rest_framework import serializers
@@ -220,23 +220,41 @@ class PaymentViewSet(viewsets.ViewSet):
             if idemotencyError:
                 return Response(idemotencyError['body'], status=idemotencyError['status'])
 
-            serializer = PaymentSerializer(data=request.data)
+            payment_serializer = PaymentSerializer(data=request.data)
 
-            if not serializer.is_valid():
-                return Response(serializer.errors, status=400)
+            if not payment_serializer.is_valid():
+                return Response(payment_serializer.errors, status=400)
             
             totals = request.data['total']
             intent = stripe.PaymentIntent.create(
                 amount=totals,
                 currency='usd',
             )
+
+            data = {
+                'amount': totals,
+                'currency': 'usd',
+                'order_id': request.session.session_key,
+                'payment_intent_id': intent['id'],
+                'payment_method_id': intent['payment_method']
+            }
+
+            payment_intent_serializer = PaymentIntentSerializer(data=data)
+
+            if not payment_intent_serializer.is_valid():
+                return Response(payment_intent_serializer.errors, status=400)
+
             return Response({
                 'clientSecret': intent['client_secret'],
             }, status=200)
         except Exception as e:
-             print(str(e))
              return Response({'msg': str(e)}, status=403)
 
+# CHECK DB ON HOW TO CONFIRM PAYMENT INTENTS. MAIN TASK HERE IS TO CHANGE STATUS OF PAYMENT INTENT
+# class PaymentConfirmView(views.APIView):
+#     def post(self, request, *args, **kwargs):
+#         payment_intent_id = request.body['payment_intent_id']
+      
     
 def checkOutofStock(session_key, product_id, quantity, mutate_cart = False):
     product = Product.objects.select_for_update().filter(id=product_id).first()
