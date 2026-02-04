@@ -251,10 +251,27 @@ class PaymentViewSet(viewsets.ViewSet):
              return Response({'msg': str(e)}, status=403)
 
 # CHECK DB ON HOW TO CONFIRM PAYMENT INTENTS. MAIN TASK HERE IS TO CHANGE STATUS OF PAYMENT INTENT
-# class PaymentConfirmView(views.APIView):
-#     def post(self, request, *args, **kwargs):
-#         payment_intent_id = request.body['payment_intent_id']
-      
+class PaymentConfirmView(views.APIView):
+    def post(self, request, *args, **kwargs):
+        payment_intent_id = request.body['payment_intent_id']
+
+        payment_intent_instance = get_object_or_404(PaymentIntent, payment_intent_id=payment_intent_id)
+
+        try:
+            stripe_intent = stripe.PaymentIntent.retrieve(payment_intent_id)
+
+            if stripe_intent.status == 'succeeded':
+                payment_intent_instance.status = PaymentIntent.SUCCEEDED
+                payment_intent_instance.save()
+                return Response({'msg': 'Payment verified and succeeded!'}, status=200)
+            
+            else:
+                payment_intent_instance.status = PaymentIntent.FAILED
+                payment_intent_instance.save()
+                return Response({'msg': f'Stripe says: {stripe_intent.status}'}, status=400)
+
+        except stripe.error.StripeError as e:
+            return Response({'error': 'Stripe communication error'}, status=500)         
     
 def checkOutofStock(session_key, product_id, quantity, mutate_cart = False):
     product = Product.objects.select_for_update().filter(id=product_id).first()
