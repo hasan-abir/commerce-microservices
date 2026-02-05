@@ -1,5 +1,5 @@
 from django.test import TestCase, Client
-from checkout_api.models import Product, Cart, CartItem, Order, OrderItem
+from checkout_api.models import Product, Cart, CartItem, Order, OrderItem, PaymentIntent
 from checkout_api.serializers import ProductSerializer, CartSerializer, CartItemSerializer
 from decimal import *
 from django.urls import reverse
@@ -365,4 +365,56 @@ class PaymentViewSetTestCase(TestCase):
 
         mock_stripe.assert_called_with(amount= str(data['total']),
             currency= 'usd')
+        
+        payment_intents = PaymentIntent.objects.all()
+
+        self.assertEqual(len(payment_intents), 1)
+
+class PaymentConfirmTestCase(TestCase):
+    def setUp(self):
+        self.payment_intent = PaymentIntent.objects.create(amount=12.34, currency='usd', order_id='123', payment_intent_id='321', payment_method_id='231')
+
+    @patch("checkout_api.views.stripe.PaymentIntent.retrieve")
+    def test_post(self, mock_stripe):
+        mock_stripe.return_value.status = 'succeeded'
+
+        url = '/payment-confirm/'
+
+        data = {'payment_intent_id': self.payment_intent.payment_intent_id}
+
+        response = self.client.post(url, data, headers={'Idempotency-Key': 'test-id-121'})
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()['msg'], "Payment verified and succeeded!")
+
+        saved_payment_intent = PaymentIntent.objects.get(payment_intent_id=self.payment_intent.payment_intent_id)
+
+        self.assertEqual(saved_payment_intent.status, PaymentIntent.SUCCEEDED)
+
+        mock_stripe.assert_called_once()
+
+        mock_stripe.assert_called_with(self.payment_intent.payment_intent_id)
+
+    @patch("checkout_api.views.stripe.PaymentIntent.retrieve")
+    def test_post_fail(self, mock_stripe):
+        mock_stripe.return_value.status = 'failed'
+
+        url = '/payment-confirm/'
+
+        data = {'payment_intent_id': self.payment_intent.payment_intent_id}
+
+        response = self.client.post(url, data)
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.json()['msg'], "Specify a 'Idempotency-Key' attribute in the headers with a UUID")
+
+        response = self.client.post(url, data, headers={'Idempotency-Key': 'test-id-129'})
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.json()['msg'], "Stripe says: failed")
+
+        saved_payment_intent = PaymentIntent.objects.get(payment_intent_id=self.payment_intent.payment_intent_id)
+
+        self.assertEqual(saved_payment_intent.status, PaymentIntent.FAILED)
+
+        mock_stripe.assert_called_once()
+
+        mock_stripe.assert_called_with(self.payment_intent.payment_intent_id)
     

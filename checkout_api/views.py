@@ -243,6 +243,7 @@ class PaymentViewSet(viewsets.ViewSet):
 
             if not payment_intent_serializer.is_valid():
                 return Response(payment_intent_serializer.errors, status=400)
+            payment_intent_serializer.save()
 
             return Response({
                 'clientSecret': intent['client_secret'],
@@ -253,7 +254,12 @@ class PaymentViewSet(viewsets.ViewSet):
 # CHECK DB ON HOW TO CONFIRM PAYMENT INTENTS. MAIN TASK HERE IS TO CHANGE STATUS OF PAYMENT INTENT
 class PaymentConfirmView(views.APIView):
     def post(self, request, *args, **kwargs):
-        payment_intent_id = request.body['payment_intent_id']
+        idemotencyError = checkIdempotency(request)
+
+        if idemotencyError:
+            return Response(idemotencyError['body'], status=idemotencyError['status'])
+
+        payment_intent_id = request.data.get('payment_intent_id')
 
         payment_intent_instance = get_object_or_404(PaymentIntent, payment_intent_id=payment_intent_id)
 
@@ -317,7 +323,7 @@ def checkSessionKey (request):
             'status': 400
         }
     
-def checkIdempotency(request, session_key, expiration):
+def checkIdempotency(request, session_key = 'unset', expiration = 30):
     if not 'Idempotency-Key' in request.headers:
         return {
             "body": {'msg': "Specify a 'Idempotency-Key' attribute in the headers with a UUID"},
