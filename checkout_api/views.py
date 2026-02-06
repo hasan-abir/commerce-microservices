@@ -9,7 +9,7 @@ from checkout_api.models import Cart, Product, CartItem, Order, OrderItem, Payme
 from checkout_api.tasks import placeorder_task
 from rest_framework.exceptions import ValidationError
 from rest_framework import serializers
-from drf_spectacular.utils import extend_schema, inline_serializer, extend_schema_view
+from drf_spectacular.utils import extend_schema, inline_serializer, extend_schema_view, OpenApiParameter
 from django.urls import reverse
 import redis
 import json
@@ -208,6 +208,8 @@ class OrderItemViewSet(viewsets.ViewSet):
         return Response(serializer.data, status=200)
     
 class PaymentViewSet(viewsets.ViewSet):
+    @extend_schema(
+    request=PaymentSerializer) 
     def create(self, request):
         try:
             if not request.session.session_key:
@@ -251,8 +253,13 @@ class PaymentViewSet(viewsets.ViewSet):
         except Exception as e:
              return Response({'msg': str(e)}, status=403)
 
-# CHECK DB ON HOW TO CONFIRM PAYMENT INTENTS. MAIN TASK HERE IS TO CHANGE STATUS OF PAYMENT INTENT
 class PaymentConfirmView(views.APIView):
+    @extend_schema(
+        request=inline_serializer(
+            name='PaymentConfirmRequest',
+            fields={
+                'payment_intent_id': serializers.CharField()
+            })) 
     def post(self, request, *args, **kwargs):
         idemotencyError = checkIdempotency(request)
 
