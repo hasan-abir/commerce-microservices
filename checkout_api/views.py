@@ -208,6 +208,8 @@ class OrderItemViewSet(viewsets.ViewSet):
         return Response(serializer.data, status=200)
     
 class PaymentViewSet(viewsets.ViewSet):
+    serializer_class=PaymentSerializer
+
     @extend_schema(
     request=PaymentSerializer) 
     def create(self, request):
@@ -254,12 +256,15 @@ class PaymentViewSet(viewsets.ViewSet):
              return Response({'msg': str(e)}, status=403)
 
 class PaymentConfirmView(views.APIView):
-    @extend_schema(
-        request=inline_serializer(
+    data_serializer = inline_serializer(
             name='PaymentConfirmRequest',
             fields={
                 'payment_intent_id': serializers.CharField()
-            })) 
+            }) 
+    serializer_class=data_serializer
+
+    @extend_schema(
+        request=data_serializer)
     def post(self, request, *args, **kwargs):
         idemotencyError = checkIdempotency(request)
 
