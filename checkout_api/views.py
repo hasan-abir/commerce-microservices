@@ -15,10 +15,11 @@ import redis
 import json
 import stripe
 import os
+from django.conf import settings
 import logging
 
 logger = logging.getLogger(__name__)
-rd_instance = redis.Redis(host='redis', port=6379, decode_responses=True)
+rd_instance = redis.Redis.from_url(settings.CELERY_BROKER_URL, decode_responses=True)
 
 stripe.api_key = os.environ.get('STRIPE_SECRET_KEY') or ''
 

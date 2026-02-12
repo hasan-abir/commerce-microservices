@@ -7,8 +7,10 @@ from unittest.mock import patch
 from django.http import QueryDict
 from django.test import TransactionTestCase
 import redis
+from django.conf import settings
 
-rd_instance = redis.Redis(host='redis', port=6379, decode_responses=True)
+# rd_instance = redis.Redis(host='redis://127.0.0.1', port=6379, decode_responses=True)
+rd_instance = redis.Redis.from_url(settings.CELERY_BROKER_URL, decode_responses=True)
 
 class ProductViewTestCase(TestCase):
     def setUp(self):
