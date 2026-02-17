@@ -234,6 +234,7 @@ class PaymentViewSet(viewsets.ViewSet):
             intent = stripe.PaymentIntent.create(
                 amount=totals,
                 currency='usd',
+                automatic_payment_methods={"enabled": True},
             )
 
             data = {
@@ -241,8 +242,10 @@ class PaymentViewSet(viewsets.ViewSet):
                 'currency': 'usd',
                 'order_id': request.session.session_key,
                 'payment_intent_id': intent['id'],
-                'payment_method_id': intent['payment_method']
             }
+
+            if intent['payment_method']:
+                data['payment_method_id'] = intent['payment_method']
 
             payment_intent_serializer = PaymentIntentSerializer(data=data)
 

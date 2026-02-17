@@ -15,18 +15,27 @@ logger = logging.getLogger(__name__)
 
 def placeorder_service(data):
     try:
+        session_key = data['session_key']
+
+        cart = Cart.objects.get(session_key=session_key)
         # Will allow rolling back db changes if the service crashes
         with transaction.atomic(): 
-            session_key = data['session_key']
-
-            cart = Cart.objects.get(session_key=session_key)
             cartSerializer = CartSerializer(instance=cart, context={'request': None})
             cartItems = CartItem.objects.filter(cart__session_key=session_key)
             
             order = Order.objects.create(status=Order.PENDING, source_cart_session_key=session_key, total=cartSerializer.data['total'], subtotal=cartSerializer.data['subtotal'], tax_rate=Decimal('0.08'), contact_email=data['contact_email'], shipping_address_line1=data['shipping_address_line1'], shipping_city=data['shipping_city'], shipping_country=data['shipping_country'], shipping_zip=data['shipping_zip'])
             
-            item_summary_list = []
 
+            resp = requests.post(
+                    "http://127.0.0.1:8000/api/payments/",
+                    data={"total": str(order.total)},
+                    timeout=10,
+                    verify=True,
+                    headers={"Idempotency-Key": f"order-{order.pk}-{random.randint(1, 10000)}"})
+            resp.raise_for_status()
+
+            item_summary_list = []
+            
             for item in cartItems:
                 OrderItem.objects.create(order=order, original_product_id=item.product.pk, product_name=item.product.name, unit_price=item.product.price, quantity=item.quantity)
 
@@ -38,14 +47,6 @@ def placeorder_service(data):
             cart.save()
 
             items_string = "\n".join(item_summary_list)
-
-            resp = requests.post(
-                    "http://127.0.0.1:8000/api/payments/",
-                    data={"total": str(order.total)},
-                    timeout=10,
-                    verify=True,
-                    headers={"Idempotency-Key": f"order-{order.pk}-{random.randint(1, 10000)}"})
-            resp.raise_for_status()
 
             sendmail_service({
                 'recipient': data['contact_email'],

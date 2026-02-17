@@ -423,7 +423,6 @@ class PaymentIntentSerializerTestCase(TestCase):
         self.assertEqual(str(errors['currency'][0]), 'This field is required.')
         self.assertEqual(str(errors['order_id'][0]), 'This field is required.')
         self.assertEqual(str(errors['payment_intent_id'][0]), 'This field is required.')
-        self.assertEqual(str(errors['payment_method_id'][0]), 'This field is required.')
 
         data['amount'] = 0.00
 

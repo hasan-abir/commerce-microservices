@@ -134,7 +134,7 @@ class PaymentIntent(models.Model):
     )
     order_id = models.CharField(max_length=100)
     payment_intent_id = models.CharField(max_length=50, unique=True)
-    payment_method_id = models.CharField(max_length=50)
+    payment_method_id = models.CharField(max_length=50, default="", blank=True)
 
     def __str__(self):
         return f"Payment intent for order: {self.order_id}"

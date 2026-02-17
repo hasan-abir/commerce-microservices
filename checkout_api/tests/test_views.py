@@ -366,7 +366,7 @@ class PaymentViewSetTestCase(TestCase):
         mock_stripe.assert_called_once()
 
         mock_stripe.assert_called_with(amount= str(data['total']),
-            currency= 'usd')
+            currency= 'usd', automatic_payment_methods={'enabled': True})
         
         payment_intents = PaymentIntent.objects.all()
 
