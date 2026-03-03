@@ -14,8 +14,8 @@ class PlaceOrderServiceTestCase(TestCase):
         self.cartItem1 = CartItem.objects.create(cart=self.cart, product=self.product1, quantity=4)
         self.cartItem2 = CartItem.objects.create(cart=self.cart, product=self.product2, quantity=2)
     @patch('checkout_api.services.requests.post')
-    @patch('checkout_api.services.sendmail_service')
-    def test_method(self, mock_service, mock_payment):
+    @patch('checkout_api.services.sendmail_task')
+    def test_method(self, mock_mail, mock_payment):
         data = {'contact_email': 'johndoe@example.com',
             'shipping_address_line1': '123 Main St',
             'shipping_city': 'Anytown',
@@ -55,8 +55,8 @@ class PlaceOrderServiceTestCase(TestCase):
 
         self.assertEqual(savedCart.status, Cart.COMPLETED)
 
-        mock_service.assert_called_once()
-        mock_service.assert_called_with({
+        mock_mail.delay.assert_called_once()
+        mock_mail.delay.assert_called_with({
             'recipient': data['contact_email'],
             'subject': ANY,
             'msg_content': "Order processed successfully!\n\nItems Ordered:\n- Test Product (22.45 x4)\n- Test Product 2 (20.45 x2)\n\nTotal: $141.16\n\nWe'll contact you soon (keep your doors unlocked 😊)."

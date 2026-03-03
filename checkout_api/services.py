@@ -6,7 +6,7 @@ from checkout_api.serializers import CartSerializer
 from decimal import *
 from django.utils import timezone
 from datetime import timedelta
-from mail_dispatch_api.services import sendmail_service
+from mail_dispatch_api.tasks import sendmail_task
 import requests
 import random
 import logging
@@ -48,7 +48,7 @@ def placeorder_service(data):
 
             items_string = "\n".join(item_summary_list)
 
-            sendmail_service({
+            sendmail_task.delay({
                 'recipient': data['contact_email'],
                 'subject': f'Order confirmed: {order.order_number}',
                 'msg_content': (

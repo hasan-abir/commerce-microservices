@@ -380,7 +380,7 @@ class PaymentConfirmTestCase(TestCase):
     def test_post(self, mock_stripe):
         mock_stripe.return_value.status = 'succeeded'
 
-        url = '/payment-confirm/'
+        url = '/api/payment-confirm/'
 
         data = {'payment_intent_id': self.payment_intent.payment_intent_id}
 
@@ -400,7 +400,7 @@ class PaymentConfirmTestCase(TestCase):
     def test_post_fail(self, mock_stripe):
         mock_stripe.return_value.status = 'failed'
 
-        url = '/payment-confirm/'
+        url = '/api/payment-confirm/'
 
         data = {'payment_intent_id': self.payment_intent.payment_intent_id}
 

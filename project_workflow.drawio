@@ -25,32 +25,47 @@
         <mxCell id="AVOnxJokPuOSqu9NJd-o-15" parent="1" style="rounded=1;whiteSpace=wrap;html=1;" value="&lt;div&gt;contact info,&lt;/div&gt;&lt;div&gt;address&lt;/div&gt;" vertex="1">
           <mxGeometry height="60" width="120" x="40" y="240" as="geometry" />
         </mxCell>
-        <mxCell id="AVOnxJokPuOSqu9NJd-o-19" edge="1" parent="1" source="AVOnxJokPuOSqu9NJd-o-16" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;shape=link;" target="AVOnxJokPuOSqu9NJd-o-18" value="">
+        <mxCell id="AVOnxJokPuOSqu9NJd-o-19" edge="1" parent="1" source="AVOnxJokPuOSqu9NJd-o-22" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;shape=link;exitX=1;exitY=0.5;exitDx=0;exitDy=0;" target="AVOnxJokPuOSqu9NJd-o-18" value="">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="AVOnxJokPuOSqu9NJd-o-16" parent="1" style="rounded=1;whiteSpace=wrap;html=1;" value="&lt;div&gt;POST&lt;/div&gt;&lt;div&gt;/api/orders/&lt;/div&gt;&lt;div&gt;(should ask for pay ment details)&lt;/div&gt;" vertex="1">
+        <mxCell id="myQOttMXRz6X2lWmS7b9-3" edge="1" parent="1" source="AVOnxJokPuOSqu9NJd-o-16" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;" target="AVOnxJokPuOSqu9NJd-o-22">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="AVOnxJokPuOSqu9NJd-o-16" parent="1" style="rounded=1;whiteSpace=wrap;html=1;" value="&lt;div&gt;POST&lt;/div&gt;&lt;div&gt;/api/orders/&lt;/div&gt;" vertex="1">
           <mxGeometry height="60" width="120" x="200" y="240" as="geometry" />
         </mxCell>
-        <mxCell id="AVOnxJokPuOSqu9NJd-o-23" edge="1" parent="1" source="AVOnxJokPuOSqu9NJd-o-18" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="AVOnxJokPuOSqu9NJd-o-22" value="">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="AVOnxJokPuOSqu9NJd-o-25" edge="1" parent="1" source="AVOnxJokPuOSqu9NJd-o-18" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.75;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="AVOnxJokPuOSqu9NJd-o-24">
+        <mxCell id="AVOnxJokPuOSqu9NJd-o-25" edge="1" parent="1" source="AVOnxJokPuOSqu9NJd-o-18" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.75;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;shape=link;" target="AVOnxJokPuOSqu9NJd-o-24">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
         <mxCell id="AVOnxJokPuOSqu9NJd-o-18" parent="1" style="rounded=1;whiteSpace=wrap;html=1;" value="&lt;div&gt;Place order task - 2&lt;/div&gt;" vertex="1">
-          <mxGeometry height="30" width="120" x="360" y="270" as="geometry" />
+          <mxGeometry height="30" width="120" x="520" y="280" as="geometry" />
         </mxCell>
         <mxCell id="AVOnxJokPuOSqu9NJd-o-20" parent="1" style="rounded=1;whiteSpace=wrap;html=1;" value="&lt;div&gt;Place order task - 1&lt;/div&gt;" vertex="1">
-          <mxGeometry height="30" width="120" x="360" y="230" as="geometry" />
+          <mxGeometry height="30" width="120" x="520" y="240" as="geometry" />
         </mxCell>
         <mxCell id="AVOnxJokPuOSqu9NJd-o-21" parent="1" style="rounded=1;whiteSpace=wrap;html=1;" value="&lt;div&gt;Place order task - 3&lt;/div&gt;" vertex="1">
-          <mxGeometry height="30" width="120" x="360" y="310" as="geometry" />
+          <mxGeometry height="30" width="120" x="520" y="320" as="geometry" />
         </mxCell>
-        <mxCell id="AVOnxJokPuOSqu9NJd-o-22" parent="1" style="rounded=1;whiteSpace=wrap;html=1;" value="&lt;div&gt;POST&lt;/div&gt;&lt;div&gt;/api/payments&lt;/div&gt;" vertex="1">
-          <mxGeometry height="60" width="120" x="520" y="230" as="geometry" />
+        <mxCell id="AVOnxJokPuOSqu9NJd-o-22" parent="1" style="rounded=1;whiteSpace=wrap;html=1;" value="&lt;div&gt;POST&lt;/div&gt;&lt;div&gt;/api/payments/&lt;/div&gt;&lt;div&gt;(draft)&lt;/div&gt;" vertex="1">
+          <mxGeometry height="60" width="120" x="360" y="240" as="geometry" />
         </mxCell>
-        <mxCell id="AVOnxJokPuOSqu9NJd-o-24" parent="1" style="rounded=1;whiteSpace=wrap;html=1;" value="&lt;div&gt;Send mail service&lt;/div&gt;&lt;div&gt;(should be task)&lt;/div&gt;" vertex="1">
-          <mxGeometry height="60" width="120" x="520" y="300" as="geometry" />
+        <mxCell id="AVOnxJokPuOSqu9NJd-o-24" parent="1" style="rounded=1;whiteSpace=wrap;html=1;" value="&lt;div&gt;Send mail task&lt;/div&gt;" vertex="1">
+          <mxGeometry height="60" width="120" x="680" y="310" as="geometry" />
+        </mxCell>
+        <mxCell id="myQOttMXRz6X2lWmS7b9-8" edge="1" parent="1" source="myQOttMXRz6X2lWmS7b9-1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;shape=link;" target="myQOttMXRz6X2lWmS7b9-5">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="myQOttMXRz6X2lWmS7b9-1" parent="1" style="rounded=1;whiteSpace=wrap;html=1;" value="&lt;div&gt;GET&lt;/div&gt;&lt;div&gt;/api/payment-confirm&lt;/div&gt;&lt;div&gt;(on webhook)&lt;/div&gt;" vertex="1">
+          <mxGeometry height="60" width="120" x="40" y="320" as="geometry" />
+        </mxCell>
+        <mxCell id="myQOttMXRz6X2lWmS7b9-5" parent="1" style="rounded=1;whiteSpace=wrap;html=1;" value="&lt;div&gt;Confirm order task - 2&lt;/div&gt;" vertex="1">
+          <mxGeometry height="30" width="120" x="200" y="360" as="geometry" />
+        </mxCell>
+        <mxCell id="myQOttMXRz6X2lWmS7b9-6" parent="1" style="rounded=1;whiteSpace=wrap;html=1;" value="&lt;div&gt;Confirm order task - 1&lt;/div&gt;" vertex="1">
+          <mxGeometry height="30" width="120" x="200" y="320" as="geometry" />
+        </mxCell>
+        <mxCell id="myQOttMXRz6X2lWmS7b9-7" parent="1" style="rounded=1;whiteSpace=wrap;html=1;" value="&lt;div&gt;Confirm order task - 3&lt;/div&gt;" vertex="1">
+          <mxGeometry height="30" width="120" x="200" y="400" as="geometry" />
         </mxCell>
       </root>
     </mxGraphModel>
