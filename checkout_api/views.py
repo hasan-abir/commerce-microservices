@@ -24,24 +24,28 @@ rd_instance = redis.Redis.from_url(settings.CELERY_BROKER_URL, decode_responses=
 stripe.api_key = os.environ.get('STRIPE_SECRET_KEY') or ''
 
 class ProductViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin,viewsets.GenericViewSet):
-    serializer_class = ProductSerializer
-
     queryset = Product.objects.all()
     serializer_class = ProductSerializer
+
+    # GET /api/products/ & GET /api/products/{product_pk}
     
 class CartViewSet(viewsets.ViewSet):
     serializer_class = CartSerializer
     queryset = Cart.objects.all()
 
+    # GET /api/carts/
     def list(self, request):
+        # initialize a guest user for tracking their interactions with the api
         if not request.session.session_key:
             request.session.save()
         
         session_key = request.session.session_key
 
+        # get or make user cart
         cart = Cart.objects.filter(session_key=session_key, status=Cart.ACTIVE).first()
 
         if not cart:
+            # for extra security
             request.session.cycle_key()
             new_session_key = request.session.session_key
 
@@ -51,7 +55,9 @@ class CartViewSet(viewsets.ViewSet):
 
         return Response(serializer.data, status=200)
     
+    # GET /api/carts/{cart_pk}
     def retrieve(self, request, pk: int):
+        # Mainly used for hyperlinking
         cart_item = get_object_or_404(self.queryset, pk=pk)
 
         serializer = CartSerializer(cart_item, context={'request': request})
@@ -62,6 +68,7 @@ class CartItemViewSet(viewsets.ModelViewSet):
     queryset = CartItem.objects.all()
     serializer_class = CartItemSerializer
 
+    # POST /api/cart-items/ with CartItemRequestSerializer
     @extend_schema(
         request=CartItemRequestSerializer, 
         responses={201: CartItemSerializer},
@@ -69,16 +76,19 @@ class CartItemViewSet(viewsets.ModelViewSet):
     )
     def create(self, request, *args, **kwargs):
         try:
+            # validate guest
             session_key = checkSessionKey(request)
 
             if not isinstance(session_key, str):
                 return Response(session_key['body'], status=session_key['status'])
             
+            # prevent spamming
             idemotencyError = checkIdempotency(request, session_key, expiration=30)
 
             if idemotencyError:
                 return Response(idemotencyError['body'], status=idemotencyError['status'])
             
+            # validate input data
             cart = Cart.objects.get(session_key=session_key)
 
             cart_url = reverse('cart-detail', kwargs={'pk': cart.pk})
@@ -91,6 +101,7 @@ class CartItemViewSet(viewsets.ModelViewSet):
 
             serializer.is_valid(raise_exception=True)
 
+            # validate stock of item
             with transaction.atomic(): 
                 product_id = int(request.data['product'].split('/products')[-1].strip("/"))
 
@@ -111,6 +122,7 @@ class CartItemViewSet(viewsets.ModelViewSet):
         responses={200: CartItemSerializer},
         methods=['PUT']
     )
+    # PUT /api/cart-items/
     def update(self, request, *args, **kwargs):
         return super().update(request, *args, **kwargs)
     
@@ -119,6 +131,7 @@ class CartItemViewSet(viewsets.ModelViewSet):
         responses={200: CartItemSerializer},
         methods=['PATCH']
     )
+    # PATCH /api/cart-items/
     def partial_update(self, request, *args, **kwargs):
         return super().partial_update(request, *args, **kwargs)
 
