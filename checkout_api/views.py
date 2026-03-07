@@ -117,24 +117,25 @@ class CartItemViewSet(viewsets.ModelViewSet):
             logger.error(f"Order failed for session {session_key}: {e}", exc_info=True)
             raise e
     
+    # PUT /api/cart-items/
     @extend_schema(
         request=CartItemRequestSerializer, 
         responses={200: CartItemSerializer},
         methods=['PUT']
     )
-    # PUT /api/cart-items/
     def update(self, request, *args, **kwargs):
         return super().update(request, *args, **kwargs)
     
+    # PATCH /api/cart-items/
     @extend_schema(
         request=CartItemRequestSerializer, 
         responses={200: CartItemSerializer},
         methods=['PATCH']
     )
-    # PATCH /api/cart-items/
     def partial_update(self, request, *args, **kwargs):
         return super().partial_update(request, *args, **kwargs)
 
+    # Auto-attaches the cart to the cart item
     def perform_create(self, serializer):
         session_key = checkSessionKey(self.request)
 
@@ -150,6 +151,7 @@ class OrderViewSet(viewsets.ViewSet):
     serializer_class = OrderSerializer
     queryset = Order.objects.all()
 
+    # GET /api/orders/{order_pk}
     def retrieve(self, request, pk):
         order = get_object_or_404(self.queryset, pk=pk)
 
@@ -157,6 +159,7 @@ class OrderViewSet(viewsets.ViewSet):
 
         return Response(serializer.data, status=200)
     
+    # POST /api/orders/ OrderDataSerializer
     @extend_schema(
         request=OrderDataSerializer, 
         responses={200: inline_serializer(
@@ -167,29 +170,32 @@ class OrderViewSet(viewsets.ViewSet):
         methods=['POST']
     )
     def create(self, request):
-
+        # validate guest
         session_key = checkSessionKey(request)
 
         if not isinstance(session_key, str):
-            return Response(session_key['body'], session_key['status'])
+            return Response(session_key['body'], status=session_key['status'])
         
+        # prevent spamming
         idemotencyError = checkIdempotency(request, session_key, expiration=3600)
 
         if idemotencyError:
             return Response(idemotencyError['body'], status=idemotencyError['status'])
 
+        # validate cartitems
         cartItems = CartItem.objects.filter(cart__session_key=session_key)
 
         if len(cartItems) < 1:
             return Response({'msg': 'Add items to your cart first.'}, status=400)
-                    
+
+        # validate input data                    
         data = request.data.copy()
         serializer = OrderDataSerializer(data=data)
 
         if not serializer.is_valid():
             return Response(serializer.errors, status=400)
-        
         try:
+            # validate stock of item (twice now)
             with transaction.atomic(): 
                 for item in cartItems:
                     error = checkOutofStock(session_key, item.product.id, item.quantity, True)
@@ -199,7 +205,8 @@ class OrderViewSet(viewsets.ViewSet):
                             item.delete()
 
                         return Response(error['body'], status=error['status'])
-            
+
+            # send the rest with the order input for the worker to make a draft of the order
             data['session_key'] = session_key
 
             placeorder_task.delay(data)

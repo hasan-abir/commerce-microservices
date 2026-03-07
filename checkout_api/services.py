@@ -15,6 +15,7 @@ logger = logging.getLogger(__name__)
 
 def placeorder_service(data):
     try:
+        # create the order object
         session_key = data['session_key']
 
         cart = Cart.objects.get(session_key=session_key)
@@ -25,7 +26,7 @@ def placeorder_service(data):
             
             order = Order.objects.create(status=Order.PENDING, source_cart_session_key=session_key, total=cartSerializer.data['total'], subtotal=cartSerializer.data['subtotal'], tax_rate=Decimal('0.08'), contact_email=data['contact_email'], shipping_address_line1=data['shipping_address_line1'], shipping_city=data['shipping_city'], shipping_country=data['shipping_country'], shipping_zip=data['shipping_zip'])
             
-
+            # Create payment intent here instead of calling the request
             resp = requests.post(
                     "http://127.0.0.1:8000/api/payments/",
                     data={"total": str(order.total)},
