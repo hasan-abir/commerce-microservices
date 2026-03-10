@@ -1,6 +1,6 @@
 from checkout_api.services import placeorder_service, cleanupcarts_service, seedproducts_service
 from django.test import TestCase
-from checkout_api.models import Cart, CartItem, Product, Order, OrderItem
+from checkout_api.models import Cart, CartItem, Product, Order, OrderItem, PaymentIntent
 from decimal import *
 from unittest.mock import patch, ANY
 from django.utils import timezone
@@ -13,9 +13,15 @@ class PlaceOrderServiceTestCase(TestCase):
         self.product2 = Product.objects.create(name="Test Product 2", price=20.45, stock=8, is_active=True)
         self.cartItem1 = CartItem.objects.create(cart=self.cart, product=self.product1, quantity=4)
         self.cartItem2 = CartItem.objects.create(cart=self.cart, product=self.product2, quantity=2)
-    @patch('checkout_api.services.requests.post')
-    @patch('checkout_api.services.sendmail_task')
-    def test_method(self, mock_mail, mock_payment):
+
+    @patch("checkout_api.services.stripe.PaymentIntent.create")
+    def test_method(self, mock_payment):
+        mock_payment.return_value = {
+            'client_secret': '123',
+            'id': '321',
+            'payment_method': 'card'
+        }
+
         data = {'contact_email': 'johndoe@example.com',
             'shipping_address_line1': '123 Main St',
             'shipping_city': 'Anytown',
@@ -55,24 +61,17 @@ class PlaceOrderServiceTestCase(TestCase):
 
         self.assertEqual(savedCart.status, Cart.COMPLETED)
 
-        mock_mail.delay.assert_called_once()
-        mock_mail.delay.assert_called_with({
-            'recipient': data['contact_email'],
-            'subject': ANY,
-            'msg_content': "Order processed successfully!\n\nItems Ordered:\n- Test Product (22.45 x4)\n- Test Product 2 (20.45 x2)\n\nTotal: $141.16\n\nWe'll contact you soon (keep your doors unlocked 😊)."
-        })
+        amount = Decimal('141.16')
+
         mock_payment.assert_called_once()
-        mock_payment.assert_called_with(
-                    "http://127.0.0.1:8000/api/payments/",
-                    data={"total": "141.16"},
-                    timeout=10,
-                    verify=True,
-                    headers={"Idempotency-Key": ANY})
+        mock_payment.assert_called_with(amount=amount, currency='usd', automatic_payment_methods={"enabled": True})
 
+        payment_intents = PaymentIntent.objects.filter(amount=amount)
 
-    @patch("checkout_api.views.stripe.PaymentIntent.create")
+        self.assertEqual(len(payment_intents), 1)
+
     @patch('checkout_api.models.Order.objects.create')
-    def test_fail_method(self, mock_create, mock_payment):
+    def test_fail_method(self, mock_create):
         mock_create.side_effect = Exception("The database is lit, bruv!")
 
         data = {'contact_email': 'johndoe@example.com',

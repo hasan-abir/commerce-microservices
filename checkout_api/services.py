@@ -2,13 +2,14 @@ from django.conf import settings
 from django.core.mail import send_mail
 from django.db import transaction
 from checkout_api.models import Cart, CartItem, Order, OrderItem, Product
-from checkout_api.serializers import CartSerializer
+from checkout_api.serializers import CartSerializer, PaymentIntentSerializer
 from decimal import *
 from django.utils import timezone
 from datetime import timedelta
 from mail_dispatch_api.tasks import sendmail_task
 import requests
 import random
+import stripe
 import logging
 
 logger = logging.getLogger(__name__)
@@ -26,15 +27,10 @@ def placeorder_service(data):
             
             order = Order.objects.create(status=Order.PENDING, source_cart_session_key=session_key, total=cartSerializer.data['total'], subtotal=cartSerializer.data['subtotal'], tax_rate=Decimal('0.08'), contact_email=data['contact_email'], shipping_address_line1=data['shipping_address_line1'], shipping_city=data['shipping_city'], shipping_country=data['shipping_country'], shipping_zip=data['shipping_zip'])
             
-            # Create payment intent here instead of calling the request
-            resp = requests.post(
-                    "http://127.0.0.1:8000/api/payments/",
-                    data={"total": str(order.total)},
-                    timeout=10,
-                    verify=True,
-                    headers={"Idempotency-Key": f"order-{order.pk}-{random.randint(1, 10000)}"})
-            resp.raise_for_status()
+            # Save payment intent for the user to complete in the client
+            create_payment_intent(order.total, session_key)
 
+            # Convert cart items to order items and discard old cart
             item_summary_list = []
             
             for item in cartItems:
@@ -46,19 +42,6 @@ def placeorder_service(data):
 
             cart.status = Cart.COMPLETED
             cart.save()
-
-            items_string = "\n".join(item_summary_list)
-
-            sendmail_task.delay({
-                'recipient': data['contact_email'],
-                'subject': f'Order confirmed: {order.order_number}',
-                'msg_content': (
-                    f"Order processed successfully!\n\n"
-                    f"Items Ordered:\n{items_string}\n\n"
-                    f"Total: ${order.total}\n\n"
-                    f"We'll contact you soon (keep your doors unlocked 😊)."
-                )
-            })
     except Exception as e:
         # exc_info is to trace the error
         try:
@@ -109,5 +92,26 @@ def seedproducts_service():
     for product in products_data:
         Product.objects.get_or_create(name=product['name'], price=product['price'], stock=product['stock'], is_active=True)
 
+def create_payment_intent(totals, session_key):
+    intent = stripe.PaymentIntent.create(
+        amount=totals,
+        currency='usd',
+        automatic_payment_methods={"enabled": True},
+    )
+
+    data = {
+        'amount': totals,
+        'currency': 'usd',
+        'order_id': session_key,
+        'payment_intent_id': intent['id'],
+    }
+
+    if intent['payment_method']:
+        data['payment_method_id'] = intent['payment_method']
+
+    payment_intent_serializer = PaymentIntentSerializer(data=data)
+    if payment_intent_serializer.is_valid():
+        payment_intent_serializer.save()
+        
 
 
