@@ -18,7 +18,7 @@ from django.contrib import admin
 from django.urls import path, include
 from rest_framework import routers
 from mail_dispatch_api.views import DispatchAPIView
-from checkout_api.views import CartViewSet, ProductViewSet, CartItemViewSet, OrderViewSet, OrderItemViewSet, PaymentViewSet, PaymentConfirmView
+from checkout_api.views import CartViewSet, ProductViewSet, CartItemViewSet, OrderViewSet, OrderItemViewSet, PaymentConfirmView
 from drf_spectacular.views import SpectacularAPIView, SpectacularRedocView, SpectacularSwaggerView
 from django.views.decorators.csrf import csrf_exempt
 
@@ -28,7 +28,6 @@ router.register(r'carts', CartViewSet, basename='cart')
 router.register(r'cartitems', CartItemViewSet, basename='cartitem')
 router.register(r'orders', OrderViewSet, basename='order')
 router.register(r'orderitems', OrderItemViewSet, basename='orderitem')
-router.register(r'payments', PaymentViewSet, basename='payment')
 
 urlpatterns = [
     path('', SpectacularSwaggerView.as_view(url_name='schema'), name='swagger-ui'),

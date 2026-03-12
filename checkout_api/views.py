@@ -227,57 +227,6 @@ class OrderItemViewSet(viewsets.ViewSet):
         serializer = OrderItemSerializer(order_item, context={'request': request})
 
         return Response(serializer.data, status=200)
-    
-class PaymentViewSet(viewsets.ViewSet):
-    serializer_class=PaymentSerializer
-
-    @extend_schema(
-    request=PaymentSerializer) 
-    def create(self, request):
-        try:
-            if not request.session.session_key:
-                request.session.save()
-
-            session_key = request.session.session_key
-
-            idemotencyError = checkIdempotency(request, session_key, 3600)
-
-            if idemotencyError:
-                return Response(idemotencyError['body'], status=idemotencyError['status'])
-
-            payment_serializer = PaymentSerializer(data=request.data)
-
-            if not payment_serializer.is_valid():
-                return Response(payment_serializer.errors, status=400)
-            
-            totals = request.data['total']
-            intent = stripe.PaymentIntent.create(
-                amount=totals,
-                currency='usd',
-                automatic_payment_methods={"enabled": True},
-            )
-
-            data = {
-                'amount': totals,
-                'currency': 'usd',
-                'order_id': request.session.session_key,
-                'payment_intent_id': intent['id'],
-            }
-
-            if intent['payment_method']:
-                data['payment_method_id'] = intent['payment_method']
-
-            payment_intent_serializer = PaymentIntentSerializer(data=data)
-
-            if not payment_intent_serializer.is_valid():
-                return Response(payment_intent_serializer.errors, status=400)
-            payment_intent_serializer.save()
-
-            return Response({
-                'clientSecret': intent['client_secret'],
-            }, status=200)
-        except Exception as e:
-             return Response({'msg': str(e)}, status=403)
 
 class PaymentConfirmView(views.APIView):
     data_serializer = inline_serializer(
