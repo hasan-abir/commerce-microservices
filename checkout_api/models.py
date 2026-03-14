@@ -3,55 +3,6 @@ from time import timezone
 import random
 import string
 
-class Product(models.Model):
-    name = models.CharField(max_length=100)
-    price = models.DecimalField(max_digits=10, decimal_places=2)
-    stock = models.IntegerField()
-    is_active = models.BooleanField()
-
-    class Meta:
-        ordering = ['-price']
-
-    def __str__(self):
-        return self.name
-
-class Cart(models.Model):
-    ACTIVE = "ACT"
-    PROCESSING = "PRO"
-    COMPLETED = "COM"
-    FAILED = "FAI"
-    STATUS_CHOICES = {
-        ACTIVE: "Active",
-        PROCESSING: "Processing",
-        COMPLETED: "Completed",
-        FAILED: "Failed"
-    }
-
-    session_key = models.CharField(max_length=50, unique=True)
-    status = models.CharField(choices=STATUS_CHOICES, max_length=3, default=ACTIVE)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-
-    def __str__(self):
-        return f"User: {self.session_key}"
-
-class CartItem(models.Model):
-    cart = models.ForeignKey(Cart, on_delete=models.CASCADE)
-    product = models.ForeignKey(Product, on_delete=models.CASCADE)
-    quantity = models.PositiveIntegerField()
-
-    class Meta:
-        ordering = ['-quantity']
-        constraints = [
-            models.UniqueConstraint(
-                fields=['cart', 'product'], 
-                name='unique_cart_product'
-            )
-        ]
-
-    def __str__(self):
-        return f"Belongs to cart: {self.cart.session_key}"
-    
 def generate_order_number():
     prefix = 'ORD-'
     suffix = ''.join(random.choices(string.ascii_uppercase + string.digits, k=6))
@@ -76,15 +27,9 @@ class Order(models.Model):
         default=PENDING,
     )
     date_placed = models.DateTimeField(auto_now=True)
-    source_cart_session_key = models.CharField(max_length=50)
-    total = models.DecimalField(max_digits=10, decimal_places=2)
-    subtotal = models.DecimalField(max_digits=10, decimal_places=2)
-    tax_rate = models.DecimalField(max_digits=5, decimal_places=3)
     contact_email = models.EmailField()
-    shipping_address_line1	= models.CharField(max_length=100)
-    shipping_city = models.CharField(max_length=100)
-    shipping_country = models.CharField(max_length=100)
-    shipping_zip = models.CharField(max_length=100)
+    total = models.DecimalField(max_digits=10, decimal_places=2)
+    payment_intent_id = models.CharField(max_length=50, unique=True)
 
     class Meta:
         ordering = ['-date_placed']
@@ -102,39 +47,3 @@ class Order(models.Model):
 
     def __str__(self):
         return f"Order number: {self.order_number}"
-
-class OrderItem(models.Model):
-    order = models.ForeignKey(Order, on_delete=models.CASCADE)
-    original_product_id = models.IntegerField()
-    product_name = models.CharField(max_length=100)
-    unit_price = models.DecimalField(max_digits=10, decimal_places=2)
-    quantity = models.PositiveIntegerField()
-
-    def __str__(self):
-        return f"Order item for order: {self.order.order_number}"
-
-class PaymentIntent(models.Model):
-    PENDING = "PEN"
-    SUCCEEDED = "SUC"
-    FAILED = "FAI"
-    STATUS_CHOICES = {
-        PENDING: "Pending",
-        SUCCEEDED: "Succeeded",
-        FAILED: "Failed",
-    }
-
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-    amount = models.DecimalField(max_digits=10, decimal_places=2)
-    currency = models.CharField(max_length=100)
-    status = models.CharField(
-        max_length=3,
-        choices=STATUS_CHOICES,
-        default=PENDING,
-    )
-    order_id = models.CharField(max_length=100)
-    payment_intent_id = models.CharField(max_length=50, unique=True)
-    payment_method_id = models.CharField(max_length=50, default="", blank=True)
-
-    def __str__(self):
-        return f"Payment intent for order: {self.order_id}"
