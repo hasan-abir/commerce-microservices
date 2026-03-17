@@ -22,8 +22,14 @@ stripe.api_key = os.environ.get('STRIPE_SECRET_KEY') or ''
 
 class PlaceOrderView(views.APIView):
     def post(self, request, format=None):
-        return Response({'msg': "Order drafted!", 'status': status.HTTP_200_OK})
+        # Validate user input with a hardcoded product list and serializer
+
+        # Evaluate totals and create Order based on it
+
+        # Create payment intent and return response token
+
+        return Response({'msg': "Order drafted! Now complete the payment to confirm it.", 'status': status.HTTP_200_OK})
     
 class StripeWebhookView(views.APIView):
     def post(self, request, format=None):
-        return Response({'msg': "Order confirmed!", 'status': status.HTTP_200_OK})
+        return Response({'msg': "Order confirmed! Wait at the front door for 4 months.", 'status': status.HTTP_200_OK})
