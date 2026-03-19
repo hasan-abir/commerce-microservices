@@ -18,3 +18,6 @@ class OrderDataSerializer(serializers.Serializer):
     shipping_city = serializers.CharField(max_length=100)
     shipping_country = serializers.CharField(max_length=100)
 
+class CartItemSerializer(serializers.Serializer):
+    product_id = serializers.CharField(max_length=100)
+    product_quantity = serializers.CharField(max_length=100)
