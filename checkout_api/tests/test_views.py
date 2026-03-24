@@ -1,4 +1,5 @@
-from django.test import TestCase, Client
+from django.test import TestCase
+from rest_framework.test import APIClient
 from checkout_api.models import Order
 from checkout_api.views import demo_products
 from decimal import *
@@ -14,7 +15,7 @@ rd_instance = redis.Redis.from_url(settings.CELERY_BROKER_URL, decode_responses=
 
 class ProductListView(TestCase):
     def setUp(self):
-        self.client = Client()
+        self.client = APIClient()
 
     def test_get(self):
         url = f'/api/checkout/demo-products/'
@@ -28,14 +29,41 @@ class ProductListView(TestCase):
 
 class PlaceOrderTestCase(TestCase):
     def setUp(self):
-        self.client = Client()
+        self.client = APIClient()
 
     def test_post(self):
         url = f'/api/checkout/place-order/'
 
-        response = self.client.post(url)
+        data = {}
+
+        response = self.client.post(url, data)
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(len(response.json()), 1)
+        self.assertEqual(response.json()['msg'], 'Key "order" is required')
+
+        data = {'order': 123}
+
+        response = self.client.post(url, data)
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(len(response.json()), 1)
+        cart_items_msg = 'Key "cart_items" is required and it must be an array of objects'
+        self.assertEqual(response.json()['msg'], cart_items_msg)
+
+        data = {'order': 123, 'cart_items': 123}
+
+        response = self.client.post(url, data)
+        self.assertEqual(response.json()['msg'], cart_items_msg)
+
+        data = {'order': 123, 'cart_items': []}
+
+        response = self.client.post(url, data, format='json')
+        self.assertEqual(response.json()['msg'], cart_items_msg)
+
+        data = {'order': 123, 'cart_items': [{}, {}]}
+
+        response = self.client.post(url, data, format='json')
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.json()['msg'], "Order drafted! Now complete the payment to confirm it.")    
+        self.assertEqual(response.json()['msg'], "Order drafted! Now complete the payment to confirm it.")
 
 class StripeWebhookTestCase(TestCase):
     def test_post(self):
