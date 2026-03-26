@@ -43,15 +43,15 @@ class PlaceOrderTestCase(TestCase):
 
         data = {'order': 123}
 
-        response = self.client.post(url, data)
+        response = self.client.post(url, data, format="json")
         self.assertEqual(response.status_code, 400)
         self.assertEqual(len(response.json()), 1)
-        cart_items_msg = 'Key "cart_items" is required and it must be an array of objects'
+        cart_items_msg = 'Key "cart_items" is required and it must be a list'
         self.assertEqual(response.json()['msg'], cart_items_msg)
 
         data = {'order': 123, 'cart_items': 123}
 
-        response = self.client.post(url, data)
+        response = self.client.post(url, data, format="json")
         self.assertEqual(response.json()['msg'], cart_items_msg)
 
         data = {'order': 123, 'cart_items': []}
@@ -60,6 +60,18 @@ class PlaceOrderTestCase(TestCase):
         self.assertEqual(response.json()['msg'], cart_items_msg)
 
         data = {'order': 123, 'cart_items': [{}, {}]}
+
+        response = self.client.post(url, data, format='json')
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(len(response.json()['msg_item_1']), 2)
+
+        data = {'order': 123, 'cart_items': [{'product_id': 1, 'product_quantity': 4}, {'product_id': 2, 'product_quantity': 6}]}
+
+        response = self.client.post(url, data, format='json')
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(len(response.json()['msg']), 1)
+
+        data = {'order': {'contact_email': 'test@test.com'}, 'cart_items': [{'product_id': 1, 'product_quantity': 4}, {'product_id': 2, 'product_quantity': 6}]}
 
         response = self.client.post(url, data, format='json')
         self.assertEqual(response.status_code, 200)

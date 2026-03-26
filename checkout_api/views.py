@@ -6,6 +6,7 @@ from rest_framework.response import Response
 from django.shortcuts import get_object_or_404
 from checkout_api.serializers import OrderSerializer, OrderDataSerializer, demo_products
 from checkout_api.models import Order
+from checkout_api.serializers import CartItemSerializer, OrderDataSerializer
 from rest_framework import serializers
 from drf_spectacular.utils import extend_schema, inline_serializer
 import redis
@@ -28,14 +29,26 @@ class PlaceOrderView(views.APIView):
     def post(self, request, format=None):
         # Validate user input with a hardcoded product list and serializer
         body = request.data
+        order = body.get('order')
+        cart_items = body.get('cart_items')
 
-        if not body.get('order'):
+        if not order:
             return Response({'msg': 'Key "order" is required'}, status=status.HTTP_400_BAD_REQUEST)
         
-        cart_items = body.get('cart_items')
         
-        if not isinstance(cart_items, list) or len(cart_items) == 0 or not all(isinstance(item, dict) for item in cart_items):
-            return Response({'msg': 'Key "cart_items" is required and it must be an array of objects'}, status=status.HTTP_400_BAD_REQUEST)
+        if not isinstance(cart_items, list) or len(cart_items) == 0:
+            return Response({'msg': 'Key "cart_items" is required and it must be a list'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        for index, item in enumerate(cart_items):
+            item_data = CartItemSerializer(data=item)
+
+            if not item_data.is_valid():
+                return Response({f'msg_item_{index + 1}': item_data.errors}, status=status.HTTP_400_BAD_REQUEST)
+            
+        order_data = OrderDataSerializer(data=order)
+            
+        if not order_data.is_valid():
+                return Response({'msg': order_data.errors}, status=status.HTTP_400_BAD_REQUEST)
 
         # Evaluate totals and create Order based on it
 
