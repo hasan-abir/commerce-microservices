@@ -31,7 +31,15 @@ class PlaceOrderTestCase(TestCase):
     def setUp(self):
         self.client = APIClient()
 
-    def test_post(self):
+    @patch("checkout_api.views.stripe.PaymentIntent.create")
+    def test_post(self, mock_stripe):
+        mock_stripe.return_value = {
+            'client_secret': '123',
+            'id': '321',
+            'payment_method': 'card'
+        }
+
+
         url = f'/api/checkout/place-order/'
 
         data = {}
@@ -76,6 +84,13 @@ class PlaceOrderTestCase(TestCase):
         response = self.client.post(url, data, format='json')
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()['msg'], "Order drafted! Now complete the payment to confirm it.")
+        
+        self.assertEqual(response.json()['totals'], 41200)
+
+        mock_stripe.assert_called_once()
+
+        mock_stripe.assert_called_with(amount= int(response.json()['totals']),
+            currency= 'usd', automatic_payment_methods={'enabled': True})
 
 class StripeWebhookTestCase(TestCase):
     def test_post(self):
