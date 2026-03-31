@@ -28,7 +28,7 @@ class Order(models.Model):
     )
     date_placed = models.DateTimeField(auto_now=True)
     contact_email = models.EmailField()
-    total = models.DecimalField(max_digits=10, decimal_places=2)
+    total = models.PositiveIntegerField()
     payment_intent_id = models.CharField(max_length=50, unique=True)
 
     class Meta:

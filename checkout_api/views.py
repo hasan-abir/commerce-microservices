@@ -58,7 +58,7 @@ class PlaceOrderView(views.APIView):
             },
         )
 
-        # Convert decimals into int for order
+        Order.objects.create(contact_email=order_data['contact_email'].value, total=totals, payment_intent_id=intent['id'])
 
         return Response({'clientSecret': intent['client_secret'], 'totals': totals, 'msg': "Order drafted! Now complete the payment to confirm it.", 'status': status.HTTP_200_OK})
     

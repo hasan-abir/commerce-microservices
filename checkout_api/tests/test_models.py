@@ -5,14 +5,14 @@ from decimal import *
 class OrderTestCase(TestCase):
     def setUp(self):
         self.order = Order.objects.create(status=Order.PAID,
-            total=Decimal('45.99'),
+            total=4599,
             contact_email='johndoe@example.com',
             payment_intent_id='123')
 
     def test_instance_is_properly_saved(self):
         self.assertEqual(Order.objects.count(), 1)
         order = Order.objects.create(status=Order.PAID,
-            total=Decimal('45.99'),
+            total=4599,
             contact_email='johndoe@example.com',
             payment_intent_id='231')
         
@@ -23,7 +23,7 @@ class OrderTestCase(TestCase):
 
     def test_save_method(self):
         order = Order.objects.create(status=Order.PAID,
-            total=Decimal('45.99'),
+            total=4599,
             contact_email='johndoe@example.com',
             payment_intent_id='321')
         

@@ -91,6 +91,13 @@ class PlaceOrderTestCase(TestCase):
 
         mock_stripe.assert_called_with(amount= int(response.json()['totals']),
             currency= 'usd', automatic_payment_methods={'enabled': True})
+        
+        saved_order = Order.objects.all().first()
+
+        self.assertTrue(saved_order)
+        self.assertEqual(saved_order.total, 41200)
+        self.assertEqual(saved_order.contact_email, data['order']['contact_email'])
+        self.assertEqual(saved_order.status, Order.PENDING)
 
 class StripeWebhookTestCase(TestCase):
     def test_post(self):
