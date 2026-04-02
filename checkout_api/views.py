@@ -64,7 +64,44 @@ class PlaceOrderView(views.APIView):
     
 class StripeWebhookView(views.APIView):
     def post(self, request, format=None):
-        return Response({'msg': "Order confirmed! Wait at the front door for 4 months.", 'status': status.HTTP_200_OK})
+        # Frontend will provide it
+        payload = request.data
+        event = None
+
+        try:
+            event = stripe.Event.construct_from(
+            payload, stripe.api_key
+            )
+        except ValueError as e:
+            return Response({'msg': 'Error loading the payment event!'}, status=status.HTTP_400_BAD_REQUEST)
+
+        if event.type == 'payment_intent.succeeded':
+            payment_intent = event.data.object
+
+            order = Order.objects.get(payment_intent_id=payment_intent['id'])
+
+            order.status = Order.PAID
+
+            order.save()
+
+            # Send mail task
+        elif event.type == 'payment_intent.payment_failed':
+            payment_intent = event.data.object
+
+            order = Order.objects.get(payment_intent_id=payment_intent['id'])
+
+            order.status = Order.CANCELLED
+
+            order.save()
+            
+            return Response({'msg': 'Order failed and cancelled!'}, status=status.
+            HTTP_400_BAD_REQUEST) 
+
+            # Send mail task
+        else:
+            return Response({'msg': 'Unhandled event type {}'.format(event.type)}, status=status.HTTP_400_BAD_REQUEST) 
+
+        return Response({'msg': "Order paid! Wait at your front door for 4 months or longer.", 'status': status.HTTP_200_OK})
 
 
 def calculate_totals(cart_items):
