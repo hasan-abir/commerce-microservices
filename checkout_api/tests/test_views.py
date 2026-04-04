@@ -33,7 +33,7 @@ class PlaceOrderTestCase(TestCase):
     def setUp(self):
         self.client = APIClient()
 
-    @patch("checkout_api.views.stripe.PaymentIntent.create")
+    @patch('checkout_api.views.stripe.PaymentIntent.create')
     def test_post(self, mock_stripe):
         mock_stripe.return_value = {
             'client_secret': '123',
@@ -49,19 +49,19 @@ class PlaceOrderTestCase(TestCase):
         response = self.client.post(url, data)
         self.assertEqual(response.status_code, 400)
         self.assertEqual(len(response.json()), 1)
-        self.assertEqual(response.json()['msg'], 'Key "order" is required')
+        self.assertEqual(response.json()['msg'], "Key 'order' is required")
 
         data = {'order': 123}
 
-        response = self.client.post(url, data, format="json")
+        response = self.client.post(url, data, format='json')
         self.assertEqual(response.status_code, 400)
         self.assertEqual(len(response.json()), 1)
-        cart_items_msg = 'Key "cart_items" is required and it must be a list'
+        cart_items_msg = "Key 'cart_items' is required and it must be a list"
         self.assertEqual(response.json()['msg'], cart_items_msg)
 
         data = {'order': 123, 'cart_items': 123}
 
-        response = self.client.post(url, data, format="json")
+        response = self.client.post(url, data, format='json')
         self.assertEqual(response.json()['msg'], cart_items_msg)
 
         data = {'order': 123, 'cart_items': []}
@@ -85,7 +85,7 @@ class PlaceOrderTestCase(TestCase):
 
         response = self.client.post(url, data, format='json')
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.json()['msg'], "Order drafted! Now complete the payment to confirm it.")
+        self.assertEqual(response.json()['msg'], 'Order drafted! Now complete the payment to confirm it.')
         
         self.assertEqual(response.json()['totals'], 41200)
 
@@ -104,12 +104,12 @@ class PlaceOrderTestCase(TestCase):
 class StripeWebhookTestCase(TestCase):
     def setUp(self):
         self.order = Order.objects.create(contact_email='test@test.com', total=2500, payment_intent_id='123')
-    @patch("checkout_api.views.stripe.Event.construct_from")
+    @patch('checkout_api.views.stripe.Event.construct_from')
     def test_post_successful(self, mock_event):
         url = f'/api/checkout/webhook/'
 
         data = SimpleNamespace(object={'id': self.order.payment_intent_id})
-        event_obj = SimpleNamespace(type="payment_intent.succeeded", data=data)
+        event_obj = SimpleNamespace(type='payment_intent.succeeded', data=data)
 
         mock_event.return_value = event_obj
 
@@ -118,20 +118,19 @@ class StripeWebhookTestCase(TestCase):
         }
 
         response = self.client.post(url, data=data, format='json')
-        print(response.json())
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.json()['msg'], "Order paid! Wait at your front door for 4 months or longer.")  
+        self.assertEqual(response.json()['msg'], 'Order paid successfully!')  
 
         modified_order = Order.objects.get(pk=self.order.pk)
 
         self.assertEqual(modified_order.status, Order.PAID)
 
-    @patch("checkout_api.views.stripe.Event.construct_from")
+    @patch('checkout_api.views.stripe.Event.construct_from')
     def test_post_failures(self, mock_event):
         url = f'/api/checkout/webhook/'
 
         data = SimpleNamespace(object={'id': self.order.payment_intent_id})
-        event_obj = SimpleNamespace(type="payment_intent.payment_failed", data=data)
+        event_obj = SimpleNamespace(type='payment_intent.payment_failed', data=data)
 
         mock_event.return_value = event_obj
 
@@ -140,12 +139,23 @@ class StripeWebhookTestCase(TestCase):
         }
 
         response = self.client.post(url, data=data, format='json')
-        print(response.json())
         self.assertEqual(response.status_code, 400)
-        self.assertEqual(response.json()['msg'], "Order failed and cancelled!")  
+        self.assertEqual(response.json()['msg'], 'Order failed and cancelled!')  
 
         modified_order = Order.objects.get(pk=self.order.pk)
 
         self.assertEqual(modified_order.status, Order.CANCELLED)
 
-        # Test internal errors
+        event_obj = SimpleNamespace(type='payment_intent.payment_something', data=data)
+
+        mock_event.return_value = event_obj
+
+        response = self.client.post(url, data=data, format='json')
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.json()['msg'], f'Unhandled event type {event_obj.type}')
+
+        mock_event.side_effect = ValueError("error, bro")
+
+        response = self.client.post(url, data=data, format='json')
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.json()['msg'], 'Error loading the payment event!')

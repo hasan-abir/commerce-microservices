@@ -15,6 +15,7 @@ import stripe
 import os
 from django.conf import settings
 import logging
+from mail_dispatch_api.tasks import sendmail_task
 
 logger = logging.getLogger(__name__)
 rd_instance = redis.Redis.from_url(settings.CELERY_BROKER_URL, decode_responses=True)
@@ -27,17 +28,16 @@ class ProductListView(views.APIView):
 
 class PlaceOrderView(views.APIView):
     def post(self, request, format=None):
-        # Validate user input with a hardcoded product list and serializer
         body = request.data
         order = body.get('order')
         cart_items = body.get('cart_items')
 
         if not order:
-            return Response({'msg': 'Key "order" is required'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'msg': "Key 'order' is required"}, status=status.HTTP_400_BAD_REQUEST)
         
         
         if not isinstance(cart_items, list) or len(cart_items) == 0:
-            return Response({'msg': 'Key "cart_items" is required and it must be a list'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'msg': "Key 'cart_items' is required and it must be a list"}, status=status.HTTP_400_BAD_REQUEST)
         
         totals = calculate_totals(cart_items)
 
@@ -84,7 +84,9 @@ class StripeWebhookView(views.APIView):
 
             order.save()
 
-            # Send mail task
+            # send recipet in mail
+
+            return Response({'msg': "Order paid successfully!", 'status': status.HTTP_200_OK})
         elif event.type == 'payment_intent.payment_failed':
             payment_intent = event.data.object
 
@@ -93,15 +95,15 @@ class StripeWebhookView(views.APIView):
             order.status = Order.CANCELLED
 
             order.save()
+
+            # send recipet in mail
             
             return Response({'msg': 'Order failed and cancelled!'}, status=status.
             HTTP_400_BAD_REQUEST) 
-
-            # Send mail task
         else:
-            return Response({'msg': 'Unhandled event type {}'.format(event.type)}, status=status.HTTP_400_BAD_REQUEST) 
+            return Response({'msg': f'Unhandled event type {event.type}'}, status=status.HTTP_400_BAD_REQUEST)
 
-        return Response({'msg': "Order paid! Wait at your front door for 4 months or longer.", 'status': status.HTTP_200_OK})
+        
 
 
 def calculate_totals(cart_items):

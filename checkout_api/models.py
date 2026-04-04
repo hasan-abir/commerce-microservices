@@ -47,3 +47,12 @@ class Order(models.Model):
 
     def __str__(self):
         return f"Order number: {self.order_number}"
+
+class OrderItem(models.Model):
+    item_id = models.CharField(max_length=50, unique=True)
+    title = models.CharField(max_length=100)
+    price = models.PositiveIntegerField()
+    quantity = models.PositiveIntegerField()
+
+    class Meta:
+        ordering = ['-price']
