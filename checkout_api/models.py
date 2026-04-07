@@ -50,9 +50,11 @@ class Order(models.Model):
 
 class OrderItem(models.Model):
     item_id = models.CharField(max_length=50, unique=True)
-    title = models.CharField(max_length=100)
-    price = models.PositiveIntegerField()
     quantity = models.PositiveIntegerField()
+    order = models.ForeignKey(Order, on_delete=models.CASCADE)
 
     class Meta:
-        ordering = ['-price']
+        ordering = ['-item_id']
+
+    def __str__(self):
+        return f"Order item: {self.item_id}"

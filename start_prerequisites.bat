@@ -31,3 +31,5 @@ if "%~1"=="" (
   python manage.py %~1
 )
 
+call "%~dp0stop_prerequisites.bat"
+

@@ -1,10 +1,15 @@
 from rest_framework import serializers
-from checkout_api.models import Order
+from checkout_api.models import Order, OrderItem
 from decimal import *
 
 class OrderSerializer(serializers.ModelSerializer):
     class Meta:
         model = Order
+        fields = '__all__'
+
+class OrderItemSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = OrderItem
         fields = '__all__'
 
 class OrderDataSerializer(serializers.Serializer):
