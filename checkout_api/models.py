@@ -49,7 +49,7 @@ class Order(models.Model):
         return f"Order number: {self.order_number}"
 
 class OrderItem(models.Model):
-    item_id = models.CharField(max_length=50, unique=True)
+    item_id = models.PositiveIntegerField(unique=True)
     quantity = models.PositiveIntegerField()
     order = models.ForeignKey(Order, on_delete=models.CASCADE)
 

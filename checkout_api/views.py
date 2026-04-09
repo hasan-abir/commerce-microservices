@@ -4,7 +4,7 @@ from django.db.models import F
 from rest_framework import viewsets, mixins, views, status
 from rest_framework.response import Response
 from django.shortcuts import get_object_or_404
-from checkout_api.serializers import OrderSerializer, OrderDataSerializer, demo_products
+from checkout_api.serializers import OrderSerializer, OrderItemSerializer, OrderDataSerializer, demo_products
 from checkout_api.models import Order
 from checkout_api.serializers import CartItemSerializer, OrderDataSerializer
 from rest_framework import serializers
@@ -58,7 +58,13 @@ class PlaceOrderView(views.APIView):
             },
         )
 
-        Order.objects.create(contact_email=order_data['contact_email'].value, total=totals, payment_intent_id=intent['id'])
+        order = Order.objects.create(contact_email=order_data['contact_email'].value, total=totals, payment_intent_id=intent['id'])
+
+        order_items = create_orderitems_from_cart(order, cart_items)
+
+        if isinstance(order_items, dict):
+            orderitems_err = order_items
+            return Response(orderitems_err, status=status.HTTP_400_BAD_REQUEST)
 
         return Response({'clientSecret': intent['client_secret'], 'totals': totals, 'msg': "Order drafted! Now complete the payment to confirm it.", 'status': status.HTTP_200_OK})
     
@@ -103,9 +109,6 @@ class StripeWebhookView(views.APIView):
         else:
             return Response({'msg': f'Unhandled event type {event.type}'}, status=status.HTTP_400_BAD_REQUEST)
 
-        
-
-
 def calculate_totals(cart_items):
     totals = 0
 
@@ -123,3 +126,29 @@ def calculate_totals(cart_items):
         totals += matched_product['price_cents'] * validated_data['product_quantity']
 
     return totals
+
+def create_orderitems_from_cart(order, cart_items):
+    for index, cart_item in enumerate(cart_items):
+        cart_item_data = CartItemSerializer(data=cart_item)
+
+        cart_item_data.is_valid()
+
+        validated_data = cart_item_data.validated_data
+
+        data = {
+            'item_id': validated_data['product_id'],
+            'quantity': validated_data['product_quantity'],
+            'order': order.pk
+        }
+
+        order_item = OrderItemSerializer(data=data)
+
+        if not order_item.is_valid():
+            return {f'msg_item_{index + 1}': order_item.errors}
+        
+        order_item.save()
+    
+    return None
+
+def create_reciept():
+    print(123)

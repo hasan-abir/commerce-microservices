@@ -82,11 +82,26 @@ class OrderItemSerializerTestCase(TestCase):
         errors = serializer.errors
         self.assertEqual(str(errors['order'][0]), f'Invalid pk "{data['order']}" - object does not exist.')
 
-        # Validate product id and quantity
+        data['order'] = self.order.pk
+        data['item_id'] = 123
+        data['quantity'] = 60
+
+        serializer = OrderItemSerializer(data=data)
+        self.assertFalse(serializer.is_valid())
+        errors = serializer.errors
+        self.assertEqual(str(errors['item_id'][0]), f"Product with id {data['item_id']} doesn't exist.")
 
         data['order'] = self.order.pk
-        data['item_id'] = "2"
-        data['quantity'] = "6"
+        data['item_id'] = 2
+        data['quantity'] = 60
+        serializer = OrderItemSerializer(data=data)
+        self.assertFalse(serializer.is_valid())
+        errors = serializer.errors
+        self.assertEqual(str(errors['quantity'][0]), 'Quantity exceeds the product.')
+
+        data['order'] = self.order.pk
+        data['item_id'] = 2
+        data['quantity'] = 6
         
         serializer = OrderItemSerializer(data=data)
         self.assertTrue(serializer.is_valid())

@@ -12,6 +12,17 @@ class OrderItemSerializer(serializers.ModelSerializer):
         model = OrderItem
         fields = '__all__'
 
+    def validate(self, attrs):
+        product = next((item for item in demo_products if item['id'] == attrs['item_id']), None)
+
+        if product:
+            if attrs['quantity'] <= product['stock']:
+                return attrs
+            else:
+                raise serializers.ValidationError({'quantity': 'Quantity exceeds the product.'})
+        else:
+            raise serializers.ValidationError({'item_id': f"Product with id {attrs['item_id']} doesn't exist."})         
+
 class OrderDataSerializer(serializers.Serializer):
     contact_email = serializers.EmailField()
 

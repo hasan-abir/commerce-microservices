@@ -1,6 +1,6 @@
 from django.test import TestCase
 from rest_framework.test import APIClient
-from checkout_api.models import Order
+from checkout_api.models import Order, OrderItem
 from checkout_api.views import demo_products
 from decimal import *
 from django.urls import reverse
@@ -100,6 +100,12 @@ class PlaceOrderTestCase(TestCase):
         self.assertEqual(saved_order.total, 41200)
         self.assertEqual(saved_order.contact_email, data['order']['contact_email'])
         self.assertEqual(saved_order.status, Order.PENDING)
+
+        order_items = OrderItem.objects.all()
+
+        self.assertEqual(len(order_items), 2)
+        self.assertEqual(order_items[0].item_id, data['cart_items'][1]['product_id'])
+        self.assertEqual(order_items[1].item_id, data['cart_items'][0]['product_id'])
 
 class StripeWebhookTestCase(TestCase):
     def setUp(self):
