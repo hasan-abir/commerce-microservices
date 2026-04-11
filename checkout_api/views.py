@@ -5,8 +5,8 @@ from rest_framework import viewsets, mixins, views, status
 from rest_framework.response import Response
 from django.shortcuts import get_object_or_404
 from checkout_api.serializers import OrderSerializer, OrderItemSerializer, OrderDataSerializer, demo_products
-from checkout_api.models import Order
-from checkout_api.serializers import CartItemSerializer, OrderDataSerializer
+from checkout_api.models import Order, OrderItem
+from checkout_api.serializers import CartItemSerializer, OrderDataSerializer, demo_products
 from rest_framework import serializers
 from drf_spectacular.utils import extend_schema, inline_serializer
 import redis
@@ -90,7 +90,7 @@ class StripeWebhookView(views.APIView):
 
             order.save()
 
-            # send recipet in mail
+            create_reciept(order.pk)
 
             return Response({'msg': "Order paid successfully!", 'status': status.HTTP_200_OK})
         elif event.type == 'payment_intent.payment_failed':
@@ -138,6 +138,8 @@ def create_orderitems_from_cart(order, cart_items):
         data = {
             'item_id': validated_data['product_id'],
             'quantity': validated_data['product_quantity'],
+            'price': validated_data['product_price'],
+            'title': validated_data['product_title'],
             'order': order.pk
         }
 
@@ -150,5 +152,12 @@ def create_orderitems_from_cart(order, cart_items):
     
     return None
 
-def create_reciept():
-    print(123)
+def create_reciept(order_pk):
+    item_totals = []
+
+    order_items = OrderItem.objects.filter(order=order_pk)
+
+    for item in order_items:
+        item_totals.append({'quantity': item.quantity, 'price': item.price, 'total': item.price * item.quantity})
+
+    return item_totals

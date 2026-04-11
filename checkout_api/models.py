@@ -51,6 +51,8 @@ class Order(models.Model):
 class OrderItem(models.Model):
     item_id = models.PositiveIntegerField(unique=True)
     quantity = models.PositiveIntegerField()
+    title = models.CharField(max_length=200)
+    price = models.PositiveIntegerField()
     order = models.ForeignKey(Order, on_delete=models.CASCADE)
 
     class Meta:

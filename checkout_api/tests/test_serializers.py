@@ -71,12 +71,16 @@ class OrderItemSerializerTestCase(TestCase):
         serializer = OrderItemSerializer(data=data)
         self.assertFalse(serializer.is_valid())
         errors = serializer.errors
-        self.assertEqual(len(errors), 3)
+        self.assertEqual(len(errors), 5)
         self.assertEqual(str(errors['item_id'][0]), 'This field is required.')
         self.assertEqual(str(errors['quantity'][0]), 'This field is required.')
         self.assertEqual(str(errors['order'][0]), 'This field is required.')
+        self.assertEqual(str(errors['price'][0]), 'This field is required.')
+        self.assertEqual(str(errors['title'][0]), 'This field is required.')
 
         data['order'] = '123'
+        data['price'] = 1200
+        data['title'] = 'Test'
         serializer = OrderItemSerializer(data=data)
         self.assertFalse(serializer.is_valid())
         errors = serializer.errors

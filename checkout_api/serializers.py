@@ -35,6 +35,9 @@ class CartItemSerializer(serializers.Serializer):
 
         if product:
             if attrs['product_quantity'] <= product['stock']:
+                attrs['product_price'] = product['price_cents']
+                attrs['product_title'] = product['title']
+
                 return attrs
             else:
                 raise serializers.ValidationError({'product_quantity': 'Quantity exceeds the product.'})

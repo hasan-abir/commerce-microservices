@@ -110,6 +110,9 @@ class PlaceOrderTestCase(TestCase):
 class StripeWebhookTestCase(TestCase):
     def setUp(self):
         self.order = Order.objects.create(contact_email='test@test.com', total=2500, payment_intent_id='123')
+        OrderItem.objects.create(item_id='1', title='Abstract Horizon Painting', price=5500, quantity=4, order=self.order)
+        OrderItem.objects.create(item_id='2', title='Minimalist Ceramic Vase', price=3200, quantity=10, order=self.order)
+        OrderItem.objects.create(item_id='3', title='Handwoven Cotton Throw',price=4500, quantity=2, order=self.order)
     @patch('checkout_api.views.stripe.Event.construct_from')
     def test_post_successful(self, mock_event):
         url = f'/api/checkout/webhook/'
