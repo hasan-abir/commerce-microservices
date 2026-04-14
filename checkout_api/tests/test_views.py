@@ -113,8 +113,9 @@ class StripeWebhookTestCase(TestCase):
         OrderItem.objects.create(item_id='1', title='Abstract Horizon Painting', price=5500, quantity=4, order=self.order)
         OrderItem.objects.create(item_id='2', title='Minimalist Ceramic Vase', price=3200, quantity=10, order=self.order)
         OrderItem.objects.create(item_id='3', title='Handwoven Cotton Throw',price=4500, quantity=2, order=self.order)
+    @patch('checkout_api.views.sendreciept_task')
     @patch('checkout_api.views.stripe.Event.construct_from')
-    def test_post_successful(self, mock_event):
+    def test_post_successful(self, mock_event, mock_task):
         url = f'/api/checkout/webhook/'
 
         data = SimpleNamespace(object={'id': self.order.payment_intent_id})
@@ -132,7 +133,10 @@ class StripeWebhookTestCase(TestCase):
 
         modified_order = Order.objects.get(pk=self.order.pk)
 
+
         self.assertEqual(modified_order.status, Order.PAID)
+
+        mock_task.delay.assert_called_once_with(modified_order.pk)
 
     @patch('checkout_api.views.stripe.Event.construct_from')
     def test_post_failures(self, mock_event):

@@ -16,6 +16,7 @@ import os
 from django.conf import settings
 import logging
 from mail_dispatch_api.tasks import sendmail_task
+from checkout_api.tasks import sendreciept_task
 
 logger = logging.getLogger(__name__)
 rd_instance = redis.Redis.from_url(settings.CELERY_BROKER_URL, decode_responses=True)
@@ -90,7 +91,7 @@ class StripeWebhookView(views.APIView):
 
             order.save()
 
-            create_reciept(order.pk)
+            sendreciept_task.delay(order.pk)
 
             return Response({'msg': "Order paid successfully!", 'status': status.HTTP_200_OK})
         elif event.type == 'payment_intent.payment_failed':
@@ -102,7 +103,7 @@ class StripeWebhookView(views.APIView):
 
             order.save()
 
-            # send recipet in mail
+            sendreciept_task.delay(order.pk)
             
             return Response({'msg': 'Order failed and cancelled!'}, status=status.
             HTTP_400_BAD_REQUEST) 
@@ -151,13 +152,3 @@ def create_orderitems_from_cart(order, cart_items):
         order_item.save()
     
     return None
-
-def create_reciept(order_pk):
-    item_totals = []
-
-    order_items = OrderItem.objects.filter(order=order_pk)
-
-    for item in order_items:
-        item_totals.append({'quantity': item.quantity, 'price': item.price, 'total': item.price * item.quantity})
-
-    return item_totals
