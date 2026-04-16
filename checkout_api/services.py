@@ -1,11 +1,27 @@
-from django.conf import settings
-from django.core.mail import send_mail
-from checkout_api.models import OrderItem
+from mail_dispatch_api.services import sendmail_service
+from checkout_api.models import OrderItem, Order
 
 def sendreciept_service(order_pk):
-    create_reciept(order_pk)
+    reciept = create_reciept(order_pk)
+    msg_content = "Order Receipt\n"
+    msg_content += "-----------------\n"
 
-    return None
+    for item in reciept['items']:
+        msg_content += f"{item['title']} (x{item['quantity']}) - ${item['price']}\n"
+
+    msg_content += "-----------------\n"
+    msg_content += f"TOTAL: ${reciept['totals']}"
+
+    order = Order.objects.get(pk=order_pk)
+
+    email = {
+        'msg_content': msg_content,
+        'subject': 'Order paid for',
+        'recipient': order.contact_email
+    }
+
+    sendmail_service(email)
+
 
 def create_reciept(order_pk):
     items = []

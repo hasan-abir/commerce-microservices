@@ -138,8 +138,9 @@ class StripeWebhookTestCase(TestCase):
 
         mock_task.delay.assert_called_once_with(modified_order.pk)
 
+    @patch('checkout_api.views.sendreciept_task')
     @patch('checkout_api.views.stripe.Event.construct_from')
-    def test_post_failures(self, mock_event):
+    def test_post_failures(self, mock_event, mock_task):
         url = f'/api/checkout/webhook/'
 
         data = SimpleNamespace(object={'id': self.order.payment_intent_id})
@@ -155,7 +156,10 @@ class StripeWebhookTestCase(TestCase):
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.json()['msg'], 'Order failed and cancelled!')  
 
+
         modified_order = Order.objects.get(pk=self.order.pk)
+        
+        mock_task.delay.assert_called_once_with(modified_order.pk)
 
         self.assertEqual(modified_order.status, Order.CANCELLED)
 
@@ -172,3 +176,4 @@ class StripeWebhookTestCase(TestCase):
         response = self.client.post(url, data=data, format='json')
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.json()['msg'], 'Error loading the payment event!')
+

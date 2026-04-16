@@ -1,5 +1,5 @@
-# from checkout_api.services import placeorder_service, cleanupcarts_service, seedproducts_service
-# from django.test import TestCase
+from checkout_api.services import sendreciept_service
+from django.test import TestCase
 # from checkout_api.models import Cart, CartItem, Product, Order, OrderItem, PaymentIntent
 # from decimal import *
 # from unittest.mock import patch, ANY
@@ -128,3 +128,9 @@
 #         products = Product.objects.all()
 
 #         self.assertEqual(len(products), 10)
+
+class SendRecieptServiceTestCase(TestCase):
+    def test_return(self):
+        reciept = sendreciept_service(1)
+
+        print(reciept)
