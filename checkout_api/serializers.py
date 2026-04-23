@@ -42,8 +42,22 @@ class CartItemSerializer(serializers.Serializer):
             else:
                 raise serializers.ValidationError({'product_quantity': 'Quantity exceeds the product.'})
         else:
-            raise serializers.ValidationError({'product_id': f"Product with id {attrs['product_id']} doesn't exist."})         
+            raise serializers.ValidationError({'product_id': f"Product with id {attrs['product_id']} doesn't exist."})
         
+class PlaceOrderSerializer(serializers.Serializer):
+    order = OrderDataSerializer(write_only=True)
+    cart_items = CartItemSerializer(many=True, write_only=True)
+
+class ProductSerializer(serializers.Serializer):
+    id = serializers.IntegerField()
+    title = serializers.CharField()
+    price_cents = serializers.IntegerField()
+    stock = serializers.IntegerField()
+
+class StripeWebhookSerializer(serializers.Serializer):
+    payload = serializers.JSONField(write_only=True)
+    stripe_signature = serializers.CharField(write_only=True)    
+
 demo_products = [
     {"id": 1, "title": "Abstract Horizon Painting", "price_cents": 5500, "stock": 5},
     {"id": 2, "title": "Minimalist Ceramic Vase", "price_cents": 3200, "stock": 12},

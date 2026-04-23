@@ -1,12 +1,12 @@
 from django.shortcuts import render
 from django.db import transaction
 from django.db.models import F
-from rest_framework import viewsets, mixins, views, status
+from rest_framework import viewsets, mixins, views, status, generics
 from rest_framework.response import Response
 from django.shortcuts import get_object_or_404
-from checkout_api.serializers import OrderSerializer, OrderItemSerializer, OrderDataSerializer, demo_products
+from checkout_api.serializers import OrderItemSerializer, OrderDataSerializer, ProductSerializer, StripeWebhookSerializer, demo_products
 from checkout_api.models import Order, OrderItem
-from checkout_api.serializers import CartItemSerializer, OrderDataSerializer, demo_products
+from checkout_api.serializers import CartItemSerializer, OrderDataSerializer, PlaceOrderSerializer, demo_products
 from rest_framework import serializers
 from drf_spectacular.utils import extend_schema, inline_serializer
 import redis
@@ -23,12 +23,16 @@ rd_instance = redis.Redis.from_url(settings.CELERY_BROKER_URL, decode_responses=
 
 stripe.api_key = os.environ.get('STRIPE_SECRET_KEY') or ''
 
-class ProductListView(views.APIView):
-    def get(self, request, format=None):
+class ProductListView(generics.ListAPIView):
+    serializer_class = ProductSerializer
+
+    def list(self, request):
         return Response(demo_products, status=status.HTTP_200_OK)
 
-class PlaceOrderView(views.APIView):
-    def post(self, request, format=None):
+class PlaceOrderView(generics.CreateAPIView):
+    serializer_class = PlaceOrderSerializer
+
+    def create(self, request):
         body = request.data
         order = body.get('order')
         cart_items = body.get('cart_items')
@@ -69,8 +73,10 @@ class PlaceOrderView(views.APIView):
 
         return Response({'clientSecret': intent['client_secret'], 'totals': totals, 'msg': "Order drafted! Now complete the payment to confirm it.", 'status': status.HTTP_200_OK})
     
-class StripeWebhookView(views.APIView):
-    def post(self, request, format=None):
+class StripeWebhookView(generics.CreateAPIView):
+    serializer_class = StripeWebhookSerializer
+
+    def create(self, request):
         # Frontend will provide it
         payload = request.data
         event = None
