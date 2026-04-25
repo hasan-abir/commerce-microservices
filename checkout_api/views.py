@@ -37,24 +37,17 @@ class PlaceOrderView(generics.CreateAPIView):
         order = body.get('order')
         cart_items = body.get('cart_items')
 
-        if not order:
-            return Response({'msg': "Key 'order' is required"}, status=status.HTTP_400_BAD_REQUEST)
+        placed_order = PlaceOrderSerializer(data=body)
+
+        if not placed_order.is_valid():
+            return Response(placed_order.errors, status=status.HTTP_400_BAD_REQUEST)
         
-        
-        if not isinstance(cart_items, list) or len(cart_items) == 0:
-            return Response({'msg': "Key 'cart_items' is required and it must be a list"}, status=status.HTTP_400_BAD_REQUEST)
-        
-        totals = calculate_totals(cart_items)
+        totals = calculate_totals(placed_order.validated_data['cart_items'])
 
         if isinstance(totals, dict):
             totals_err = totals
             return Response(totals_err, status=status.HTTP_400_BAD_REQUEST)
             
-        order_data = OrderDataSerializer(data=order)
-            
-        if not order_data.is_valid():
-                return Response({'msg': order_data.errors}, status=status.HTTP_400_BAD_REQUEST)
-        
         intent = stripe.PaymentIntent.create(
             amount=totals,
             currency='usd',
@@ -63,7 +56,7 @@ class PlaceOrderView(generics.CreateAPIView):
             },
         )
 
-        order = Order.objects.create(contact_email=order_data['contact_email'].value, total=totals, payment_intent_id=intent['id'])
+        order = Order.objects.create(contact_email=placed_order.initial_data['order']['contact_email'], total=totals, payment_intent_id=intent['id'])
 
         order_items = create_orderitems_from_cart(order, cart_items)
 
@@ -120,13 +113,7 @@ def calculate_totals(cart_items):
     totals = 0
 
     for index, cart_item in enumerate(cart_items):
-        cart_item_data = CartItemSerializer(data=cart_item)
-
-
-        if not cart_item_data.is_valid():
-            return {f'msg_item_{index + 1}': cart_item_data.errors}
-        
-        validated_data = cart_item_data.validated_data
+        validated_data = cart_item
 
         matched_product = next((product for product in demo_products if product.get('id') == validated_data['product_id']), None)
         
