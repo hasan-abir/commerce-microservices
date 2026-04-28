@@ -46,12 +46,14 @@ class PlaceOrderTestCase(TestCase):
 
         data = {}
 
+        # Test "validate input"
         response = self.client.post(url, data)
         self.assertEqual(response.status_code, 400)
         self.assertEqual(len(response.json()), 2)
         self.assertEqual(response.json()['order'], ['This field is required.'])
         self.assertEqual(response.json()['cart_items'], ['This field is required.'])
 
+        # Test success
         data = {'order': {'contact_email': 'test@test.com'}, 'cart_items': [{'product_id': 1, 'product_quantity': 4}, {'product_id': 2, 'product_quantity': 6}]}
 
         response = self.client.post(url, data, format='json')

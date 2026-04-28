@@ -34,14 +34,14 @@ class PlaceOrderView(generics.CreateAPIView):
 
     def create(self, request):
         body = request.data
-        order = body.get('order')
-        cart_items = body.get('cart_items')
 
+        # validate input
         placed_order = PlaceOrderSerializer(data=body)
 
         if not placed_order.is_valid():
             return Response(placed_order.errors, status=status.HTTP_400_BAD_REQUEST)
         
+        # prepare for payment intent
         totals = calculate_totals(placed_order.validated_data['cart_items'])
 
         if isinstance(totals, dict):
@@ -56,9 +56,11 @@ class PlaceOrderView(generics.CreateAPIView):
             },
         )
 
-        order = Order.objects.create(contact_email=placed_order.initial_data['order']['contact_email'], total=totals, payment_intent_id=intent['id'])
+        # Create order in DB
+        order = Order.objects.create(contact_email=placed_order.validated_data['order']['contact_email'], total=totals, payment_intent_id=intent['id'])
 
-        order_items = create_orderitems_from_cart(order, cart_items)
+        # Convert cart items into order items for DB
+        order_items = create_orderitems_from_cart(order, placed_order.validated_data['cart_items'])
 
         if isinstance(order_items, dict):
             orderitems_err = order_items
@@ -123,11 +125,7 @@ def calculate_totals(cart_items):
 
 def create_orderitems_from_cart(order, cart_items):
     for index, cart_item in enumerate(cart_items):
-        cart_item_data = CartItemSerializer(data=cart_item)
-
-        cart_item_data.is_valid()
-
-        validated_data = cart_item_data.validated_data
+        validated_data = cart_item
 
         data = {
             'item_id': validated_data['product_id'],
