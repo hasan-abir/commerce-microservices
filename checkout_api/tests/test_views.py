@@ -91,6 +91,7 @@ class StripeWebhookTestCase(TestCase):
     def test_post_successful(self, mock_event, mock_task):
         url = f'/api/checkout/webhook/'
 
+        # mocking payment
         data = SimpleNamespace(object={'id': self.order.payment_intent_id})
         event_obj = SimpleNamespace(type='payment_intent.succeeded', data=data)
 
@@ -100,12 +101,12 @@ class StripeWebhookTestCase(TestCase):
             'test': 123
         }
 
+        # Test payment_intent.payment_failed
         response = self.client.post(url, data=data, format='json')
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()['msg'], 'Order paid successfully!')  
 
         modified_order = Order.objects.get(pk=self.order.pk)
-
 
         self.assertEqual(modified_order.status, Order.PAID)
 
@@ -116,6 +117,7 @@ class StripeWebhookTestCase(TestCase):
     def test_post_failures(self, mock_event, mock_task):
         url = f'/api/checkout/webhook/'
 
+        # mocking payment
         data = SimpleNamespace(object={'id': self.order.payment_intent_id})
         event_obj = SimpleNamespace(type='payment_intent.payment_failed', data=data)
 
@@ -125,6 +127,7 @@ class StripeWebhookTestCase(TestCase):
             'test': 123
         }
 
+        # Test payment_intent.payment_failed
         response = self.client.post(url, data=data, format='json')
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.json()['msg'], 'Order failed and cancelled!')  
@@ -139,13 +142,15 @@ class StripeWebhookTestCase(TestCase):
         event_obj = SimpleNamespace(type='payment_intent.payment_something', data=data)
 
         mock_event.return_value = event_obj
-
+        
+        # Test payment_intent.payment_something
         response = self.client.post(url, data=data, format='json')
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.json()['msg'], f'Unhandled event type {event_obj.type}')
 
         mock_event.side_effect = ValueError("error, bro")
 
+        # Test 'validate payment made'
         response = self.client.post(url, data=data, format='json')
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.json()['msg'], 'Error loading the payment event!')

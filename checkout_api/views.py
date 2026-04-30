@@ -1,21 +1,12 @@
-from django.shortcuts import render
-from django.db import transaction
-from django.db.models import F
-from rest_framework import viewsets, mixins, views, status, generics
+from rest_framework import status, generics
 from rest_framework.response import Response
-from django.shortcuts import get_object_or_404
-from checkout_api.serializers import OrderItemSerializer, OrderDataSerializer, ProductSerializer, StripeWebhookSerializer, demo_products
-from checkout_api.models import Order, OrderItem
-from checkout_api.serializers import CartItemSerializer, OrderDataSerializer, PlaceOrderSerializer, demo_products
-from rest_framework import serializers
-from drf_spectacular.utils import extend_schema, inline_serializer
+from checkout_api.serializers import OrderItemSerializer, ProductSerializer, StripeWebhookSerializer, PlaceOrderSerializer, demo_products
+from checkout_api.models import Order
 import redis
-import json
 import stripe
 import os
 from django.conf import settings
 import logging
-from mail_dispatch_api.tasks import sendmail_task
 from checkout_api.tasks import sendreciept_task
 
 logger = logging.getLogger(__name__)
@@ -76,6 +67,7 @@ class StripeWebhookView(generics.CreateAPIView):
         payload = request.data
         event = None
 
+        # validate payment made
         try:
             event = stripe.Event.construct_from(
             payload, stripe.api_key
@@ -83,6 +75,7 @@ class StripeWebhookView(generics.CreateAPIView):
         except ValueError as e:
             return Response({'msg': 'Error loading the payment event!'}, status=status.HTTP_400_BAD_REQUEST)
 
+        # validate payment status
         if event.type == 'payment_intent.succeeded':
             payment_intent = event.data.object
 
