@@ -18,13 +18,11 @@ from django.contrib import admin
 from django.urls import path, include
 from rest_framework import routers
 from drf_spectacular.views import SpectacularAPIView, SpectacularRedocView, SpectacularSwaggerView
-from checkout_api.views import ProductListView, PlaceOrderView, StripeWebhookView
-
-router = routers.DefaultRouter()
+from checkout_api.views import ProductListView, PlaceOrderView, StripeWebhookView, ClientHomeView
 
 urlpatterns = [
-    path('', SpectacularSwaggerView.as_view(url_name='schema'), name='swagger-ui'),
-    path('api/', include(router.urls)),
+    # path('', SpectacularSwaggerView.as_view(url_name='schema'), name='swagger-ui'),
+    path('', ClientHomeView.as_view()),
     path('api/checkout/demo-products/', ProductListView.as_view(), name="product-list"),
     path('api/checkout/place-order/', PlaceOrderView.as_view(), name="place-order"),
     path('api/checkout/webhook/', StripeWebhookView.as_view(), name="webhook"),

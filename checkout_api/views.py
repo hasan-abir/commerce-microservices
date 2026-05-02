@@ -8,11 +8,15 @@ import os
 from django.conf import settings
 import logging
 from checkout_api.tasks import sendreciept_task
+from django.views.generic import TemplateView
 
 logger = logging.getLogger(__name__)
 rd_instance = redis.Redis.from_url(settings.CELERY_BROKER_URL, decode_responses=True)
 
 stripe.api_key = os.environ.get('STRIPE_SECRET_KEY') or ''
+
+class ClientHomeView(TemplateView):
+    template_name = 'index.html'
 
 class ProductListView(generics.ListAPIView):
     serializer_class = ProductSerializer
