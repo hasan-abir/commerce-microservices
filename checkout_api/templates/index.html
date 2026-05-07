@@ -7,36 +7,23 @@
   </head>
   <body>
     <h1>Product Order</h1>
-    <div class="products"></div>
+    <div
+      x-data="{ products: [], cart: [], }"
+      x-init="products = await (await fetch('/api/checkout/demo-products/')).json()"
+    >
+      <template x-for="product in products" :key="product.id">
+        <ul x-data="{stock: 1}">
+          <li x-text="product.title"></li>
+          <li x-text="product.price_cents"></li>
+          <button
+            @click="cart.push({product_id: product.id, product_quantity: stock})"
+          >
+            Add to Cart
+          </button>
+        </ul>
+      </template>
+      <pre x-text="JSON.stringify(cart, null, 2)"></pre>
+    </div>
   </body>
-  <script>
-    const fetchProducts = fetch("/api/checkout/demo-products/");
-    const productsContainer = document.querySelector(".products");
-
-    fetchProducts
-      .then((response) => {
-        return response.json();
-      })
-      .then((body) => {
-        if (body instanceof Array) {
-          body.forEach((product) => {
-            const acceptedAttrs = ["id", "title", "price_cents", "stock"];
-            const validatedProductKeys =
-              JSON.stringify(Object.keys(product)) ===
-              JSON.stringify(acceptedAttrs);
-
-            if (product instanceof Object && validatedProductKeys) {
-              productsContainer.innerHTML += `
-                <ul>
-                  <li>${product.id}</li>
-                  <li>${product.title}</li>
-                  <li>${product.price_cents}</li>
-                  <li>${product.stock}</li>
-                </ul>
-              `;
-            }
-          });
-        }
-      });
-  </script>
+  <script src="//unpkg.com/alpinejs" defer></script>
 </html>
