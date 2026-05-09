@@ -6,24 +6,49 @@
     <title>Microservices</title>
   </head>
   <body>
-    <h1>Product Order</h1>
-    <div
+    <main
       x-data="{ products: [], cart: [], }"
       x-init="products = await (await fetch('/api/checkout/demo-products/')).json()"
     >
-      <template x-for="product in products" :key="product.id">
-        <ul x-data="{stock: 1}">
-          <li x-text="product.title"></li>
-          <li x-text="product.price_cents"></li>
-          <button
-            @click="cart.push({product_id: product.id, product_quantity: stock})"
-          >
-            Add to Cart
-          </button>
-        </ul>
-      </template>
-      <pre x-text="JSON.stringify(cart, null, 2)"></pre>
-    </div>
+      <section>
+        <h1>Product Order</h1>
+        <p>Add Items to Cart</p>
+        <div>
+          <template x-for="product in products" :key="product.id">
+            <ul x-data="{quantity: 1}">
+              <li x-text="`Title: ${product.title}`"></li>
+              <li x-text="`Price (in cents): ${product.price_cents}`"></li>
+              <li x-text="`Stock: ${product.stock}`"></li>
+              <li x-text="`Quantity: ${quantity}`"></li>
+              <button @click="quantity < product.stock ? quantity += 1: null">
+                Increment
+              </button>
+              <button @click="quantity > 1 ? quantity -= 1: null">
+                Decrement
+              </button>
+              <button
+                @click="cart.map(item => item.id).includes(product.id) === false? cart.push({...product, quantity: quantity}) : null"
+              >
+                Add to Cart
+              </button>
+            </ul>
+          </template>
+        </div>
+      </section>
+      <section>
+        <h1>Cart</h1>
+        <template x-for="item in cart" :key="cart.product_id">
+          <ul>
+            <li x-text="`Title: ${item.title}`"></li>
+            <li x-text="`Price (in cents): ${item.price_cents}`"></li>
+            <li x-text="`Quantity: ${item.quantity}`"></li>
+            <li x-text="`Item total: ${item.quantity * item.price_cents}`"></li>
+            <button>Remove</button>
+          </ul>
+          <pre x-text="JSON.stringify(item)"></pre>
+        </template>
+      </section>
+    </main>
   </body>
   <script src="//unpkg.com/alpinejs" defer></script>
 </html>
