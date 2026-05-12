@@ -15,7 +15,19 @@
         <p>Add Items to Cart</p>
         <div>
           <template x-for="product in products" :key="product.id">
-            <ul x-data="{quantity: 1}">
+            <ul
+              x-data="{
+              quantity: 1, 
+              addToCart(product, qtty) {
+                const cartItemExists = cart.map(item => item.id).includes(product.id)
+
+                if(cartItemExists === false) {
+                  this.quantity = 1
+                  return cart.push({...product, quantity: qtty})
+                }
+              }
+            }"
+            >
               <li x-text="`Title: ${product.title}`"></li>
               <li x-text="`Price (in cents): ${product.price_cents}`"></li>
               <li x-text="`Stock: ${product.stock}`"></li>
@@ -26,24 +38,26 @@
               <button @click="quantity > 1 ? quantity -= 1: null">
                 Decrement
               </button>
-              <button
-                @click="cart.map(item => item.id).includes(product.id) === false? cart.push({...product, quantity: quantity}) : null"
-              >
-                Add to Cart
-              </button>
+              <button @click="addToCart(product, quantity)">Add to Cart</button>
             </ul>
           </template>
         </div>
       </section>
       <section>
         <h1>Cart</h1>
-        <template x-for="item in cart" :key="cart.product_id">
+        <template x-for="cartItem in cart" :key="cartItem.id">
           <ul>
-            <li x-text="`Title: ${item.title}`"></li>
-            <li x-text="`Price (in cents): ${item.price_cents}`"></li>
-            <li x-text="`Quantity: ${item.quantity}`"></li>
-            <li x-text="`Item total: ${item.quantity * item.price_cents}`"></li>
-            <button>Remove</button>
+            <li x-text="`Title: ${cartItem.title}`"></li>
+            <li x-text="`Price (in cents): ${cartItem.price_cents}`"></li>
+            <li x-text="`Quantity: ${cartItem.quantity}`"></li>
+            <li
+              x-text="`Item total (in cents): ${cartItem.quantity * cartItem.price_cents}`"
+            ></li>
+            <button
+              @click="cart = cart.filter(item => item.id !== cartItem.id)"
+            >
+              Remove
+            </button>
           </ul>
           <pre x-text="JSON.stringify(item)"></pre>
         </template>
