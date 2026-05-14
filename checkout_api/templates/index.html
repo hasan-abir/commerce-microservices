@@ -43,7 +43,19 @@
           </template>
         </div>
       </section>
-      <section>
+      <section
+        x-data="{
+        total: 0,
+        subtotal: 0,
+        tax: 0.1,
+        calculateTotal() {
+          this.subtotal = cart.map(item => item.price_cents * item.quantity).reduce((a, b) => a + b, 0)
+
+          this.total = this.subtotal * this.tax + this.subtotal
+        }
+      }"
+        x-init="$watch('cart', value => calculateTotal())"
+      >
         <h1>Cart</h1>
         <template x-for="cartItem in cart" :key="cartItem.id">
           <ul>
@@ -59,8 +71,13 @@
               Remove
             </button>
           </ul>
-          <pre x-text="JSON.stringify(item)"></pre>
         </template>
+        <h2>Subtotal (in cents):</h2>
+        <p x-text="subtotal"></p>
+        <h2>Tax:</h2>
+        <p x-text="tax"></p>
+        <h2>Total:</h2>
+        <p x-text="total"></p>
       </section>
     </main>
   </body>
