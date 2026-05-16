@@ -52,6 +52,18 @@
           this.subtotal = cart.map(item => item.price_cents * item.quantity).reduce((a, b) => a + b, 0)
 
           this.total = this.subtotal * this.tax + this.subtotal
+        },
+        orderErrs: {},
+        placeOrder() {
+          fetch('/api/checkout/place-order/', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({})
+          }).then(res => res.json()).then(res => {
+            this.orderErrs = res
+          })
         }
       }"
         x-init="$watch('cart', value => calculateTotal())"
@@ -78,6 +90,8 @@
         <p x-text="tax"></p>
         <h2>Total:</h2>
         <p x-text="total"></p>
+        <p x-text="JSON.stringify(orderErrs)"></p>
+        <button @click="placeOrder()">Place Order</button>
       </section>
     </main>
   </body>
