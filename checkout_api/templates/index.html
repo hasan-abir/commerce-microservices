@@ -64,6 +64,11 @@
           }).then(res => res.json()).then(res => {
             this.orderErrs = res
           })
+        },
+        readableKey(key) {
+          const words = key.split('_')
+
+          return words.join(' ')
         }
       }"
         x-init="$watch('cart', value => calculateTotal())"
@@ -96,14 +101,39 @@
             :key="key"
           >
             <li>
-              <strong x-text="`${key}: `"></strong>
+              <strong
+                x-text="`${readableKey(key)}: `"
+                style="text-transform: capitalize"
+              ></strong>
 
               <template x-if="typeof value === 'string'">
                 <span x-text="value"></span>
               </template>
 
-              <template x-if="typeof value === 'object'">
-                <span x-text="JSON.stringify(value)"></span>
+              <template x-if="!Array.isArray(value)">
+                <template
+                  x-for="[nestedKey, nestedValue] in Object.entries(value)"
+                  :key="nestedKey"
+                  ><div>
+                    <span
+                      x-text="`${readableKey(nestedKey)}: `"
+                      style="text-transform: capitalize"
+                    ></span>
+                    <span x-text="nestedValue[0]"></span></div
+                ></template>
+              </template>
+
+              <template x-if="Array.isArray(value)">
+                <template
+                  x-for="[nestedKey, nestedValue] in Object.entries(value[0])"
+                  :key="nestedKey"
+                  ><div>
+                    <span
+                      x-text="`${readableKey(nestedKey)}: `"
+                      style="text-transform: capitalize"
+                    ></span>
+                    <span x-text="nestedValue[0]"></span></div
+                ></template>
               </template>
             </li>
           </template>
