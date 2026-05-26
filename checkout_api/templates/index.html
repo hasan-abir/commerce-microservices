@@ -53,17 +53,25 @@
 
           this.total = this.subtotal * this.tax + this.subtotal
         },
+        contact_email: '',
         orderErrs: {},
+        placeOrderStatus: 0,
         placeOrder() {
-          fetch('/api/checkout/place-order/', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({order: {}, cart_items: [{}],})
-          }).then(res => res.json()).then(res => {
-            this.orderErrs = res
-          })
+            fetch('/api/checkout/place-order/', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({order: {contact_email: this.contact_email}, cart_items: cart,})
+              }).then(res => {
+                this.placeOrderStatus = res.status            
+
+                return res.json()
+              }).then(res => {
+                if (this.placeOrderStatus >= 400) {
+                  this.orderErrs = res
+                }
+              })
         },
         readableKey(key) {
           const words = key.split('_')
@@ -138,6 +146,13 @@
             </li>
           </template>
         </ul>
+        <label for="email-input" style="text-transform: capitalize"
+          >contact email</label
+        >
+        <input type="text" x-model="contact_email" id="email-input" />
+        <template x-if="placeOrderStatus >= 200 && placeOrderStatus <= 204">
+          <p>Order placed successfully</p>
+        </template>
         <button @click="placeOrder()">Place Order</button>
       </section>
     </main>
