@@ -57,12 +57,15 @@
         orderErrs: {},
         placeOrderStatus: 0,
         placeOrder() {
+            this.orderErrs = {}
+            this.placeOrderStatus = 0
+
             fetch('/api/checkout/place-order/', {
                 method: 'POST',
                 headers: {
                   'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({order: {contact_email: this.contact_email}, cart_items: cart,})
+                body: JSON.stringify({order: {contact_email: this.contact_email}, cart_items: Alpine.raw(cart)})
               }).then(res => {
                 this.placeOrderStatus = res.status            
 
