@@ -4,6 +4,11 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Microservices</title>
+    <style>
+      body {
+        padding-bottom: 10rem;
+      }
+    </style>
   </head>
   <body>
     <main
@@ -56,7 +61,9 @@
         contact_email: '',
         orderErrs: {},
         placeOrderStatus: 0,
-        placeOrder() {
+        placeOrder(e) {
+            e.preventDefault()
+
             this.orderErrs = {}
             this.placeOrderStatus = 0
 
@@ -121,7 +128,9 @@
                 <span x-text="value"></span>
               </template>
 
-              <template x-if="!Array.isArray(value)">
+              <template
+                x-if="typeof value === 'object' && value !== null && !Array.isArray(value)"
+              >
                 <template
                   x-for="[nestedKey, nestedValue] in Object.entries(value)"
                   :key="nestedKey"
@@ -149,14 +158,16 @@
             </li>
           </template>
         </ul>
-        <label for="email-input" style="text-transform: capitalize"
-          >contact email</label
-        >
-        <input type="text" x-model="contact_email" id="email-input" />
-        <template x-if="placeOrderStatus >= 200 && placeOrderStatus <= 204">
-          <p>Order placed successfully</p>
-        </template>
-        <button @click="placeOrder()">Place Order</button>
+        <form @submit="placeOrder">
+          <label for="email-input" style="text-transform: capitalize"
+            >contact email</label
+          >
+          <input type="text" x-model="contact_email" id="email-input" />
+          <template x-if="placeOrderStatus >= 200 && placeOrderStatus <= 204">
+            <p>Order placed successfully</p>
+          </template>
+          <button type="submit">Place Order</button>
+        </form>
       </section>
     </main>
   </body>

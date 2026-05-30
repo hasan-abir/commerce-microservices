@@ -42,14 +42,25 @@ class PlaceOrderView(generics.CreateAPIView):
         if isinstance(totals, dict):
             totals_err = totals
             return Response(totals_err, status=status.HTTP_400_BAD_REQUEST)
-            
-        intent = stripe.PaymentIntent.create(
-            amount=totals,
-            currency='usd',
-            automatic_payment_methods={
-                'enabled': True,
-            },
-        )
+        
+        try:    
+            intent = stripe.PaymentIntent.create(
+                amount=totals,
+                currency='usd',
+                automatic_payment_methods={
+                    'enabled': True,
+                },
+            )
+        except stripe.error.AuthenticationError as e:
+            body = e.json_body
+
+            return Response({'stripe': body['error']['message']}, status=status.HTTP_400_BAD_REQUEST)
+        except stripe.error.InvalidRequestError as e:
+            body = e.json_body
+
+            return Response({'stripe': body['error']['message']}, status=status.HTTP_400_BAD_REQUEST)
+        
+        # TODO: Add APIAUTH ERROR
 
         # Create order in DB
         order = Order.objects.create(contact_email=placed_order.validated_data['order']['contact_email'], total=totals, payment_intent_id=intent['id'])
@@ -118,6 +129,9 @@ def calculate_totals(cart_items):
         
         totals += matched_product['price_cents'] * validated_data['product_quantity']
 
+    if totals < 50:
+        return {'cart_items': 'Cart cannot be empty!'}
+    
     return totals
 
 def create_orderitems_from_cart(order, cart_items):
