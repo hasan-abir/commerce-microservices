@@ -52,9 +52,7 @@ class PlaceOrderView(generics.CreateAPIView):
                 },
             )
         except stripe.error.AuthenticationError as e:
-            body = e.json_body
-
-            return Response({'stripe': body['error']['message']}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'stripe': 'API Key not provided'}, status=status.HTTP_400_BAD_REQUEST)
         except stripe.error.InvalidRequestError as e:
             body = e.json_body
 

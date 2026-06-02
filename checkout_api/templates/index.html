@@ -67,12 +67,14 @@
             this.orderErrs = {}
             this.placeOrderStatus = 0
 
+            const cart_items = Alpine.raw(cart.map(item => ({product_id: item.id, product_quantity: item.quantity}))) 
+
             fetch('/api/checkout/place-order/', {
                 method: 'POST',
                 headers: {
                   'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({order: {contact_email: this.contact_email}, cart_items: Alpine.raw(cart)})
+                body: JSON.stringify({order: {contact_email: this.contact_email}, cart_items: cart_items})
               }).then(res => {
                 this.placeOrderStatus = res.status            
 
