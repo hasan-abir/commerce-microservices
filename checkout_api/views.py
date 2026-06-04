@@ -18,6 +18,11 @@ stripe.api_key = os.environ.get('STRIPE_SECRET_KEY') or ''
 class ClientHomeView(TemplateView):
     template_name = 'index.html'
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["stripe_secret_key"] = stripe.api_key
+        return context
+
 class ProductListView(generics.ListAPIView):
     serializer_class = ProductSerializer
 

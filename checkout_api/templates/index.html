@@ -168,10 +168,12 @@
           <template x-if="placeOrderStatus >= 200 && placeOrderStatus <= 204">
             <p>Order placed successfully</p>
           </template>
+          {{stripe_secret_key}}
           <button type="submit">Place Order</button>
         </form>
       </section>
     </main>
   </body>
   <script src="//unpkg.com/alpinejs" defer></script>
+  <script src="https://js.stripe.com/dahlia/stripe.js"></script>
 </html>
