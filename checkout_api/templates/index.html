@@ -82,6 +82,27 @@
               }).then(res => {
                 if (this.placeOrderStatus >= 400) {
                   this.orderErrs = res
+                } else {
+                  const stripe = new Stripe('{{stripe_publishable_key}}')
+
+                  stripe.confirmPayment({
+                    elements: stripe.elements({appearance: {theme: 'stripe'}, clientSecret: res.clientSecret}),
+                    confirmParams: {
+                      return_url: 'http://localhost:8000/',
+                    },
+                  }).then(({ error }) => {
+                    if (error) {
+                      if (error.type === 'card_error' || error.type === 'validation_error') {
+                        console.log(error.message);
+                      } else {
+                        console.log('An unexpected error occurred.');
+                      }
+                    }
+                  })
+                  .catch((err) => {
+                    console.log('A critical connection error occurred.');
+                    console.error(err);
+                  });
                 }
               })
         },
@@ -89,9 +110,9 @@
           const words = key.split('_')
 
           return words.join(' ')
-        }
+        },
       }"
-        x-init="$watch('cart', value => calculateTotal())"
+        x-init="$watch('cart', value => calculateTotal());"
       >
         <h1>Cart</h1>
         <template x-for="cartItem in cart" :key="cartItem.id">
@@ -166,9 +187,8 @@
           >
           <input type="text" x-model="contact_email" id="email-input" />
           <template x-if="placeOrderStatus >= 200 && placeOrderStatus <= 204">
-            <p>Order placed successfully</p>
+            <div id="payment-element"></div>
           </template>
-          {{stripe_secret_key}}
           <button type="submit">Place Order</button>
         </form>
       </section>

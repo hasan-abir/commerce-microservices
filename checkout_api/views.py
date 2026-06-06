@@ -20,7 +20,7 @@ class ClientHomeView(TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context["stripe_secret_key"] = stripe.api_key
+        context["stripe_publishable_key"] = os.environ.get('STRIPE_PUBLISHABLE_KEY')
         return context
 
 class ProductListView(generics.ListAPIView):
@@ -63,8 +63,6 @@ class PlaceOrderView(generics.CreateAPIView):
 
             return Response({'stripe': body['error']['message']}, status=status.HTTP_400_BAD_REQUEST)
         
-        # TODO: Add APIAUTH ERROR
-
         # Create order in DB
         order = Order.objects.create(contact_email=placed_order.validated_data['order']['contact_email'], total=totals, payment_intent_id=intent['id'])
 
