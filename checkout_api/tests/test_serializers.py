@@ -1,5 +1,5 @@
 from django.test import TestCase
-from checkout_api.models import Order
+from checkout_api.models import Order, OrderItem
 from checkout_api.serializers import CartItemSerializer, OrderDataSerializer, OrderSerializer, OrderItemSerializer
 from decimal import *
 from django.urls import reverse
@@ -109,6 +109,13 @@ class OrderItemSerializerTestCase(TestCase):
         
         serializer = OrderItemSerializer(data=data)
         self.assertTrue(serializer.is_valid())
+
+        OrderItem.objects.create(item_id=data['item_id'], quantity=data['quantity'], title=data['title'], price=data['price'], order=self.order)
+
+        serializer = OrderItemSerializer(data=data)
+        self.assertFalse(serializer.is_valid())
+        errors = serializer.errors
+        self.assertEqual(str(errors['non_field_errors'][0]), 'The fields item_id, order must make a unique set.')
 
 class CartItemSerializerTestCase(TestCase):
     def test_instance_validation(self):
