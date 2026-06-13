@@ -23,6 +23,9 @@ class ClientHomeView(TemplateView):
         context["stripe_publishable_key"] = os.environ.get('STRIPE_PUBLISHABLE_KEY')
         return context
 
+class ClientPaymentView(TemplateView):
+    template_name = 'payment.html'
+
 class ProductListView(generics.ListAPIView):
     serializer_class = ProductSerializer
 
