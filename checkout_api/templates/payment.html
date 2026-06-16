@@ -6,6 +6,17 @@
     <title>Payment</title>
   </head>
   <body>
-    Payment Errors
+    <h1>Payment redirect</h1>
+
+    <div
+      x-data="{ 
+          payment_intent: new URLSearchParams(window.location.search).get('payment_intent') || '',
+          redirect_status: new URLSearchParams(window.location.search).get('redirect_status') || ''
+      }"
+    >
+      <p x-text="`Payment status: ${redirect_status}`"></p>
+      <p x-text="`For Payment ID: ${payment_intent}`"></p>
+    </div>
   </body>
+  <script src="//unpkg.com/alpinejs" defer></script>
 </html>
