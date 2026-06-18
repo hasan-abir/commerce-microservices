@@ -14,6 +14,7 @@ logger = logging.getLogger(__name__)
 rd_instance = redis.Redis.from_url(settings.CELERY_BROKER_URL, decode_responses=True)
 
 stripe.api_key = os.environ.get('STRIPE_SECRET_KEY') or ''
+stripe_webhook_secret = os.environ.get('STRIPE_WEBHOOK_SECRET') or ''
 
 class ClientHomeView(TemplateView):
     template_name = 'index.html'
