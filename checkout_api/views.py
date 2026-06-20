@@ -13,8 +13,10 @@ from django.views.generic import TemplateView
 logger = logging.getLogger(__name__)
 rd_instance = redis.Redis.from_url(settings.CELERY_BROKER_URL, decode_responses=True)
 
-stripe.api_key = os.environ.get('STRIPE_SECRET_KEY') or ''
+stripe_api_key = os.environ.get('STRIPE_SECRET_KEY') or ''
+stripe.api_key = stripe_api_key
 stripe_webhook_secret = os.environ.get('STRIPE_WEBHOOK_SECRET') or ''
+stripe_client = stripe.StripeClient(stripe_api_key)
 
 class ClientHomeView(TemplateView):
     template_name = 'index.html'
@@ -94,6 +96,16 @@ class StripeWebhookView(generics.CreateAPIView):
             )
         except ValueError as e:
             return Response({'msg': 'Error loading the payment event!'}, status=status.HTTP_400_BAD_REQUEST)
+
+        if stripe_webhook_secret:
+            sig_header = request.headers.get('stripe-signature')
+            try:
+                event = stripe_client.construct_event(
+                    payload, sig_header, stripe_webhook_secret
+                )
+            except stripe.error.SignatureVerificationError as e:
+                print('⚠️  Webhook signature verification failed.' + str(e))
+                return Response({'success': False}, status=status.HTTP_401_UNAUTHORIZED)
 
         # validate payment status
         if event.type == 'payment_intent.succeeded':
