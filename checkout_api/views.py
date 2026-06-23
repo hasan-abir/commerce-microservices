@@ -5,6 +5,7 @@ from checkout_api.models import Order
 import redis
 import stripe
 import os
+import json
 from django.conf import settings
 import logging
 from checkout_api.tasks import sendreciept_task
@@ -82,17 +83,17 @@ class PlaceOrderView(generics.CreateAPIView):
         return Response({'clientSecret': intent['client_secret'], 'totals': totals, 'msg': "Order drafted! Now complete the payment to confirm it.", 'status': status.HTTP_200_OK})
     
 class StripeWebhookView(generics.CreateAPIView):
-    serializer_class = StripeWebhookSerializer
+    # serializer_class = StripeWebhookSerializer
 
     def create(self, request):
         # Frontend will provide it
-        payload = request.data
+        payload = request.body
         event = None
 
         # validate payment made
         try:
             event = stripe.Event.construct_from(
-            payload, stripe.api_key
+                json.loads(payload), stripe_api_key
             )
         except ValueError as e:
             return Response({'msg': 'Error loading the payment event!'}, status=status.HTTP_400_BAD_REQUEST)
