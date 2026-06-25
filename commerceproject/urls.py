@@ -19,11 +19,13 @@ from django.urls import path, include
 from rest_framework import routers
 from drf_spectacular.views import SpectacularAPIView, SpectacularRedocView, SpectacularSwaggerView
 from checkout_api.views import ProductListView, PlaceOrderView, StripeWebhookView, ClientHomeView, ClientPaymentView
+from mail_dispatch_api.views import DispatchAPIView
 
 urlpatterns = [
     path('api/docs/', SpectacularSwaggerView.as_view(url_name='schema'), name='swagger-ui'),
     path('', ClientHomeView.as_view()),
     path('payment', ClientPaymentView.as_view()),
+    path('api/mail/', DispatchAPIView.as_view(), name="send-mail"),
     path('api/checkout/demo-products/', ProductListView.as_view(), name="product-list"),
     path('api/checkout/place-order/', PlaceOrderView.as_view(), name="place-order"),
     path('api/checkout/webhook/', StripeWebhookView.as_view(), name="webhook"),

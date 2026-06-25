@@ -83,7 +83,7 @@ class PlaceOrderView(generics.CreateAPIView):
         return Response({'clientSecret': intent['client_secret'], 'totals': totals, 'msg': "Order drafted! Now complete the payment to confirm it.", 'status': status.HTTP_200_OK})
     
 class StripeWebhookView(generics.CreateAPIView):
-    # serializer_class = StripeWebhookSerializer
+    serializer_class = StripeWebhookSerializer
 
     def create(self, request):
         # Frontend will provide it
