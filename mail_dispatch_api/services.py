@@ -6,8 +6,6 @@ def sendmail_service(email_data):
     subject = email_data['subject']
     msg_content = email_data['msg_content']
 
-    print(email_data)
-
     return send_mail(
         subject,
         msg_content,
