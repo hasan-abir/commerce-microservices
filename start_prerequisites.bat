@@ -36,7 +36,7 @@ echo CELERY_BROKER_URL=%CELERY_BROKER_URL%
 if "%~1"=="" (
   python manage.py runserver
 ) else (
-  %~1
+  call %~1
 )
 
 call "%~dp0stop_prerequisites.bat"
