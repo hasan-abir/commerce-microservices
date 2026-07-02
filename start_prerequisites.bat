@@ -1,6 +1,7 @@
 @echo off
 rem Script description: WINDOWS ONLY. CHANGE THE DIRECTORIES AS NEEDED
 
+call "%~dp0stop_prerequisites.bat"
 
 @REM cd /d G:\postgresql-18.4-1-windows-x64-binaries\pgsql\bin
 cd /d I:\postgresql-18.1-2-windows-x64-binaries\pgsql\bin
