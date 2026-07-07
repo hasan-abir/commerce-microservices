@@ -9,7 +9,7 @@
         box-sizing: border-box;
         padding: 0;
         margin: 0;
-        font-family: Arial, Helvetica, sans-serif;
+        font-family: "Open Sans", sans-serif;
         /* border: 2px solid brown; */
       }
 
@@ -19,7 +19,14 @@
         display: flex;
       }
 
+      h1,
+      h2,
+      h3 {
+        font-weight: 600;
+      }
+
       h1 {
+        text-transform: uppercase;
         margin-bottom: 5rem;
       }
 
@@ -49,10 +56,19 @@
 
       button {
         display: block;
+        font-size: 1rem;
+        text-transform: uppercase;
+        border: none;
+        cursor: pointer;
+      }
+
+      p {
+        margin-bottom: 1rem;
       }
 
       body {
         padding-bottom: 10rem;
+        background-color: #f6f6f6;
       }
 
       .inline-btn {
@@ -64,13 +80,61 @@
         flex-wrap: wrap;
       }
       .product-list > * {
-        width: 280px;
+        min-width: 280px;
         margin-right: 1rem;
         margin-bottom: 1rem;
-        padding: 1rem;
-        background-color: blanchedalmond;
+        background-color: #ffffff;
+        border-radius: 1rem;
+        box-shadow: 0rem 0.5rem 1rem 0.05rem rgba(0, 0, 0, 0.08);
+        overflow: hidden;
+        /* border: 1px solid #d4d4d4; */
+      }
+      .card-body {
+        padding: 1.5rem;
+      }
+      .title {
+        background-color: #c5ffbc;
+        box-shadow: inset 0px 0px 13px 0px rgba(0, 0, 0, 0.1);
+        padding: 1rem 1.5rem;
+        letter-spacing: -0.04rem;
+        margin: 0;
+      }
+      .price > p {
+        font-size: 4rem;
+        line-height: 1;
+      }
+      .stock-qtty {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1rem;
+      }
+      .stock-qtty > p {
+        color: #ff1f1f;
+      }
+      .stock-qtty .btn-group > button {
+        padding: 0.2rem 0.8rem;
+        border-radius: 0.5rem;
+      }
+      .stock-qtty span {
+        margin: 0 1rem;
+      }
+      .add-to-cart-btn {
+        width: 100%;
+        padding: 0.7rem 1.5rem;
+        border-radius: 0.5rem;
+        background-color: #ffe6ac;
+        letter-spacing: -0.04rem;
+        font-weight: 600;
+        box-shadow: inset 0px 0px 13px 0px rgba(0, 0, 0, 0.1);
       }
     </style>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300..800;1,300..800&display=swap"
+      rel="stylesheet"
+    />
   </head>
   <body>
     <main
@@ -84,35 +148,52 @@
           <template x-for="product in products" :key="product.id">
             <div
               x-data="{
-              quantity: 1, 
-              addToCart(product, qtty) {
-                const cartItemExists = cart.map(item => item.id).includes(product.id)
-
-                if(cartItemExists === false) {
-                  this.quantity = 1
-                  return cart.push({...product, quantity: qtty})
+              quantity: 1,
+              inCart: false, 
+              addToCart(product) {
+                if(this.inCart) {
+                  this.inCart = false
+                  cart = cart.filter(item => item.id !== product.id)
+                } else {
+                  this.inCart = true
+                  cart.push({...product, quantity: this.quantity})
                 }
               }
             }"
             >
-              <h3 x-text="`${product.title}`"></h3>
-              <p x-text="`For $${(product.price_cents / 100).toFixed(2)}`"></p>
-              <p x-text="`${product.stock} in stock`"></p>
-              <p x-text="`Quantity:`"></p>
-              <button
-                @click="quantity < product.stock ? quantity += 1: null"
-                class="inline-btn"
-              >
-                +
-              </button>
-              <span x-text="`${quantity}`"></span>
-              <button
-                @click="quantity > 1 ? quantity -= 1: null"
-                class="inline-btn"
-              >
-                -
-              </button>
-              <button @click="addToCart(product, quantity)">Add to Cart</button>
+              <h3 class="title" x-text="`${product.title}`"></h3>
+              <div class="card-body">
+                <div class="price">
+                  <span>For </span>
+                  <p x-text="`$${(product.price_cents / 100).toFixed(2)}`"></p>
+                </div>
+                <div class="stock-qtty">
+                  <div class="qtty">
+                    <p x-text="`Quantity`"></p>
+                    <div class="btn-group">
+                      <button
+                        @click="quantity < product.stock ? quantity += 1: null"
+                        class="inline-btn"
+                      >
+                        +
+                      </button>
+                      <span x-text="`${quantity}`"></span>
+                      <button
+                        @click="quantity > 1 ? quantity -= 1: null"
+                        class="inline-btn"
+                      >
+                        -
+                      </button>
+                    </div>
+                  </div>
+                  <p><em x-text="`${product.stock} in stock`"></em></p>
+                </div>
+                <button
+                  class="add-to-cart-btn"
+                  @click="addToCart(product)"
+                  x-text="inCart ? 'Remove from Cart' : 'Add to Cart'"
+                ></button>
+              </div>
             </div>
           </template>
         </div>
