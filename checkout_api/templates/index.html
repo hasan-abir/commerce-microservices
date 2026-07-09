@@ -80,12 +80,11 @@
         flex-wrap: wrap;
       }
       .product-list > * {
-        min-width: 280px;
+        min-width: 300px;
         margin-right: 1rem;
         margin-bottom: 1rem;
         background-color: #ffffff;
         border-radius: 1rem;
-        box-shadow: 0rem 0.5rem 1rem 0.05rem rgba(0, 0, 0, 0.08);
         overflow: hidden;
         /* border: 1px solid #d4d4d4; */
       }
@@ -93,8 +92,7 @@
         padding: 1.5rem;
       }
       .title {
-        background-color: #c5ffbc;
-        box-shadow: inset 0px 0px 13px 0px rgba(0, 0, 0, 0.1);
+        border-bottom: 3px solid #f6f6f6;
         padding: 1rem 1.5rem;
         letter-spacing: -0.04rem;
         margin: 0;
@@ -102,12 +100,12 @@
       .price > p {
         font-size: 4rem;
         line-height: 1;
+        margin-bottom: 2rem;
       }
       .stock-qtty {
         display: flex;
         justify-content: space-between;
-        align-items: center;
-        margin-bottom: 1rem;
+        margin-bottom: 2rem;
       }
       .stock-qtty > p {
         color: #ff1f1f;
@@ -115,24 +113,41 @@
       .stock-qtty .btn-group > button {
         padding: 0.2rem 0.8rem;
         border-radius: 0.5rem;
+        background-color: #ffffff;
+        border: 3px solid #f6f6f6;
       }
       .stock-qtty span {
-        margin: 0 1rem;
+        margin: 0 0.5rem;
+        min-width: 1.5rem;
+        text-align: center;
+        display: inline-block;
       }
       .add-to-cart-btn {
         width: 100%;
         padding: 0.7rem 1.5rem;
         border-radius: 0.5rem;
-        background-color: #ffe6ac;
+        background-color: #fffc5c;
         letter-spacing: -0.04rem;
         font-weight: 600;
-        box-shadow: inset 0px 0px 13px 0px rgba(0, 0, 0, 0.1);
+      }
+
+      .cart-item {
+        margin-right: 1rem;
+        margin-bottom: 1rem;
+        background-color: #ffffff;
+        border-radius: 1rem;
+        padding: 1.5rem;
+        overflow: hidden;
       }
     </style>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
       href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300..800;1,300..800&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://cdn.jsdelivr.net/npm/remixicon@4.9.0/fonts/remixicon.css"
       rel="stylesheet"
     />
   </head>
@@ -143,19 +158,18 @@
     >
       <section>
         <h1>Product Order</h1>
-        <h2>Add Items to Cart</h2>
         <div class="product-list">
           <template x-for="product in products" :key="product.id">
             <div
               x-data="{
               quantity: 1,
-              inCart: false, 
+              get inCart() {
+                return cart.some(item => item.id === this.product.id);
+              },
               addToCart(product) {
                 if(this.inCart) {
-                  this.inCart = false
                   cart = cart.filter(item => item.id !== product.id)
                 } else {
-                  this.inCart = true
                   cart.push({...product, quantity: this.quantity})
                 }
               }
@@ -175,14 +189,14 @@
                         @click="quantity < product.stock ? quantity += 1: null"
                         class="inline-btn"
                       >
-                        +
+                        <i class="ri-add-line"></i>
                       </button>
                       <span x-text="`${quantity}`"></span>
                       <button
                         @click="quantity > 1 ? quantity -= 1: null"
                         class="inline-btn"
                       >
-                        -
+                        <i class="ri-subtract-line"></i>
                       </button>
                     </div>
                   </div>
@@ -293,25 +307,30 @@
       >
         <h1>Cart</h1>
         <template x-for="cartItem in cart" :key="cartItem.id">
-          <ul>
-            <li x-text="`Title: ${cartItem.title}`"></li>
-            <li x-text="`Price (in cents): ${cartItem.price_cents}`"></li>
-            <li x-text="`Quantity: ${cartItem.quantity}`"></li>
-            <li
-              x-text="`Item total (in cents): ${cartItem.quantity * cartItem.price_cents}`"
-            ></li>
+          <div class="cart-item">
+            <h3 x-text="cartItem.title"></h3>
+            <p
+              x-text="`$${(cartItem.price_cents / 100).toFixed(2)} x ${cartItem.quantity}`"
+            ></p>
+            <p>
+              <span>Item total - </span
+              ><span
+                x-text="`$${(cartItem.quantity * cartItem.price_cents / 100).toFixed(2)}`"
+              ></span>
+            </p>
             <button
+              class="add-to-cart-btn"
               @click="cart = cart.filter(item => item.id !== cartItem.id)"
             >
               Remove
             </button>
-          </ul>
+          </div>
         </template>
-        <h2>Subtotal (in cents):</h2>
+        <h2>Subtotal</h2>
         <p x-text="subtotal"></p>
-        <h2>Tax:</h2>
+        <h2>Tax</h2>
         <p x-text="tax"></p>
-        <h2>Total:</h2>
+        <h2>Total</h2>
         <p x-text="total"></p>
         <ul>
           <template
