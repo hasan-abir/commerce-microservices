@@ -46,7 +46,7 @@
         flex: 2;
         margin-right: 1rem;
       }
-      section:nth-of-type(1) {
+      section:nth-of-type(2) {
         flex: 1;
       }
 
@@ -60,6 +60,19 @@
         text-transform: uppercase;
         border: none;
         cursor: pointer;
+      }
+
+      label {
+        display: inline-block;
+        margin-bottom: 0.2rem;
+      }
+
+      input {
+        width: 300px;
+        display: block;
+        border-radius: 0.5rem;
+        padding: 0.5rem;
+        border: 2px solid #5c6cf8;
       }
 
       p {
@@ -122,22 +135,55 @@
         text-align: center;
         display: inline-block;
       }
-      .add-to-cart-btn {
+      .add-to-cart-btn,
+      .remove-from-cart-btn {
         width: 100%;
         padding: 0.7rem 1.5rem;
         border-radius: 0.5rem;
-        background-color: #fffc5c;
         letter-spacing: -0.04rem;
         font-weight: 600;
       }
 
+      .add-to-cart-btn {
+        background-color: #f8f55c;
+      }
+      .remove-from-cart-btn {
+        background-color: #f85c5c;
+        color: #ffffff;
+      }
+
       .cart-item {
+        width: 300px;
         margin-right: 1rem;
         margin-bottom: 1rem;
         background-color: #ffffff;
         border-radius: 1rem;
         padding: 1.5rem;
         overflow: hidden;
+      }
+
+      .place-order {
+        background-color: #5c6cf8;
+        color: #ffffff;
+        width: 300px;
+        padding: 0.7rem 1.5rem;
+        margin-top: 1rem;
+        border-radius: 0.5rem;
+        letter-spacing: -0.04rem;
+        font-weight: 600;
+      }
+
+      .totals {
+        margin-bottom: 3rem;
+      }
+
+      .totals > h2 {
+        margin-bottom: 0.5rem;
+      }
+
+      .totals > p {
+        font-size: 3rem;
+        line-height: 1;
       }
     </style>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -203,7 +249,7 @@
                   <p><em x-text="`${product.stock} in stock`"></em></p>
                 </div>
                 <button
-                  class="add-to-cart-btn"
+                  :class="inCart? 'remove-from-cart-btn': 'add-to-cart-btn'"
                   @click="addToCart(product)"
                   x-text="inCart ? 'Remove from Cart' : 'Add to Cart'"
                 ></button>
@@ -319,30 +365,27 @@
               ></span>
             </p>
             <button
-              class="add-to-cart-btn"
+              class="remove-from-cart-btn"
               @click="cart = cart.filter(item => item.id !== cartItem.id)"
             >
               Remove
             </button>
           </div>
         </template>
-        <h2>Subtotal</h2>
-        <p x-text="subtotal"></p>
-        <h2>Tax</h2>
-        <p x-text="tax"></p>
-        <h2>Total</h2>
-        <p x-text="total"></p>
-        <ul>
+        <div class="totals">
+          <h2>Subtotal</h2>
+          <p x-text="`$${(subtotal / 100).toFixed(2)}`"></p>
+          <h2>Tax</h2>
+          <p x-text="`${tax * 100}%`"></p>
+          <h2>Total</h2>
+          <p x-text="`$${(total / 100).toFixed(2)}`"></p>
+        </div>
+        <div>
           <template
             x-for="[key, value] in Object.entries(orderErrs)"
             :key="key"
           >
-            <li>
-              <strong
-                x-text="`${readableKey(key)}: `"
-                style="text-transform: capitalize"
-              ></strong>
-
+            <div class="error-msg">
               <template x-if="typeof value === 'string'">
                 <span x-text="value"></span>
               </template>
@@ -361,22 +404,9 @@
                     <span x-text="nestedValue[0]"></span></div
                 ></template>
               </template>
-
-              <template x-if="Array.isArray(value)">
-                <template
-                  x-for="[nestedKey, nestedValue] in Object.entries(value[0])"
-                  :key="nestedKey"
-                  ><div>
-                    <span
-                      x-text="`${readableKey(nestedKey)}: `"
-                      style="text-transform: capitalize"
-                    ></span>
-                    <span x-text="nestedValue[0]"></span></div
-                ></template>
-              </template>
-            </li>
+            </div>
           </template>
-        </ul>
+        </div>
         <form @submit="placeOrder">
           <label for="email-input" style="text-transform: capitalize"
             >contact email</label
@@ -385,7 +415,7 @@
           <template x-if="placeOrderStatus >= 200 && placeOrderStatus <= 204">
             <p>Order placed successfully</p>
           </template>
-          <button type="submit">Place Order</button>
+          <button type="submit" class="place-order">Place Order</button>
         </form>
         <form
           @submit="confirmOrder"
