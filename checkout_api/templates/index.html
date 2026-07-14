@@ -81,7 +81,11 @@
 
       body {
         padding-bottom: 10rem;
-        background-color: #f6f6f6;
+        background-color: #f4f4f4;
+      }
+
+      form {
+        margin-bottom: 1.5rem;
       }
 
       .inline-btn {
@@ -99,7 +103,7 @@
         background-color: #ffffff;
         border-radius: 1rem;
         overflow: hidden;
-        /* border: 1px solid #d4d4d4; */
+        box-shadow: 0rem 0rem 2rem 0rem rgba(0, 0, 0, 0.05);
       }
       .card-body {
         padding: 1.5rem;
@@ -160,17 +164,26 @@
         border-radius: 1rem;
         padding: 1.5rem;
         overflow: hidden;
+        box-shadow: 0rem 0rem 2rem 0rem rgba(0, 0, 0, 0.05);
       }
 
-      .place-order {
-        background-color: #5c6cf8;
-        color: #ffffff;
+      .place-order,
+      .pay-for-order {
         width: 300px;
         padding: 0.7rem 1.5rem;
         margin-top: 1rem;
         border-radius: 0.5rem;
         letter-spacing: -0.04rem;
         font-weight: 600;
+      }
+
+      .place-order {
+        background-color: #5c6cf8;
+        color: #ffffff;
+      }
+      .pay-for-order {
+        background-color: #44eb75;
+        color: #000;
       }
 
       .totals {
@@ -184,6 +197,15 @@
       .totals > p {
         font-size: 3rem;
         line-height: 1;
+      }
+      .error-msg {
+        background: #f85c5c;
+        color: #ffffff;
+        font-weight: 600;
+        border-radius: 0.5rem;
+        display: inline-block;
+        margin-bottom: 1rem;
+        padding: 1rem;
       }
     </style>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -424,7 +446,7 @@
           <div id="payment-element">
             <!-- Stripe.js injects the Payment Element -->
           </div>
-          <button type="submit">Pay now</button>
+          <button type="submit" class="pay-for-order">Pay now</button>
           <p x-text="paymentErrs"></p>
           <template
             x-if="confirmOrderStatus >= 200 && confirmOrderStatus <= 204"
