@@ -207,6 +207,14 @@
         margin-bottom: 1rem;
         padding: 1rem;
       }
+      .success-msg {
+        background-color: #73beff;
+        display: inline-block;
+        margin-top: 2rem;
+        margin-bottom: 0.2rem;
+        padding: 1rem;
+        border-radius: 0.5rem;
+      }
     </style>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -435,7 +443,7 @@
           >
           <input type="text" x-model="contact_email" id="email-input" />
           <template x-if="placeOrderStatus >= 200 && placeOrderStatus <= 204">
-            <p>Order placed successfully</p>
+            <p class="success-msg">Order placed successfully</p>
           </template>
           <button type="submit" class="place-order">Place Order</button>
         </form>
