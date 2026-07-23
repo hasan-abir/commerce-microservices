@@ -16,8 +16,6 @@
       main {
         width: 80%;
         margin: 10rem auto;
-        display: flex;
-        flex-direction: row;
       }
 
       h1,
@@ -98,7 +96,7 @@
         flex-wrap: wrap;
       }
       .product-list > * {
-        min-width: 300px;
+        width: 300px;
         margin-right: 1rem;
         margin-bottom: 1rem;
         background-color: #ffffff;
@@ -217,17 +215,30 @@
         border-radius: 0.5rem;
       }
 
+      .container {
+        display: flex;
+        flex-direction: row;
+      }
+
+      .hero {
+        margin-bottom: 4rem;
+      }
+
+      .hero h1 {
+        font-size: 4rem;
+        margin-bottom: 1rem;
+        line-height: 1;
+      }
+
+      .hero p {
+        max-width: 500px;
+        margin-bottom: 0;
+      }
+
       @media (max-width: 600px) {
         main {
           flex-direction: column;
         }
-        /* section:nth-of-type(1) {
-        flex: 2;
-        margin-right: 1rem;
-      }
-      section:nth-of-type(2) {
-        flex: 1;
-      } */
       }
     </style>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -246,12 +257,23 @@
       x-data="{ products: [], cart: [], }"
       x-init="products = await (await fetch('/api/checkout/demo-products/')).json()"
     >
-      <section>
-        <h1>Product Order</h1>
-        <div class="product-list">
-          <template x-for="product in products" :key="product.id">
-            <div
-              x-data="{
+      <div class="hero">
+        <h1>A Microservice <br />Showcase Project</h1>
+        <p>
+          Here we must run down everything that this project is capable of
+          doing, however small they might seem. For example, the UI stuff, the
+          payment stripe, the backend handling of the payment, and then finally
+          the microservice part, where you get mail after the payment after
+          being on queue.
+        </p>
+      </div>
+      <div class="container">
+        <section>
+          <h1>Product Order</h1>
+          <div class="product-list">
+            <template x-for="product in products" :key="product.id">
+              <div
+                x-data="{
               quantity: 1,
               get inCart() {
                 return cart.some(item => item.id === this.product.id);
@@ -264,46 +286,48 @@
                 }
               }
             }"
-            >
-              <h3 class="title" x-text="`${product.title}`"></h3>
-              <div class="card-body">
-                <div class="price">
-                  <span>For </span>
-                  <p x-text="`$${(product.price_cents / 100).toFixed(2)}`"></p>
-                </div>
-                <div class="stock-qtty">
-                  <div class="qtty">
-                    <p x-text="`Quantity`"></p>
-                    <div class="btn-group">
-                      <button
-                        @click="quantity < product.stock ? quantity += 1: null"
-                        class="inline-btn"
-                      >
-                        <i class="ri-add-line"></i>
-                      </button>
-                      <span x-text="`${quantity}`"></span>
-                      <button
-                        @click="quantity > 1 ? quantity -= 1: null"
-                        class="inline-btn"
-                      >
-                        <i class="ri-subtract-line"></i>
-                      </button>
-                    </div>
+              >
+                <h3 class="title" x-text="`${product.title}`"></h3>
+                <div class="card-body">
+                  <div class="price">
+                    <span>For </span>
+                    <p
+                      x-text="`$${(product.price_cents / 100).toFixed(2)}`"
+                    ></p>
                   </div>
-                  <p><em x-text="`${product.stock} in stock`"></em></p>
+                  <div class="stock-qtty">
+                    <div class="qtty">
+                      <p x-text="`Quantity`"></p>
+                      <div class="btn-group">
+                        <button
+                          @click="quantity < product.stock ? quantity += 1: null"
+                          class="inline-btn"
+                        >
+                          <i class="ri-add-line"></i>
+                        </button>
+                        <span x-text="`${quantity}`"></span>
+                        <button
+                          @click="quantity > 1 ? quantity -= 1: null"
+                          class="inline-btn"
+                        >
+                          <i class="ri-subtract-line"></i>
+                        </button>
+                      </div>
+                    </div>
+                    <p><em x-text="`${product.stock} in stock`"></em></p>
+                  </div>
+                  <button
+                    :class="inCart? 'remove-from-cart-btn': 'add-to-cart-btn'"
+                    @click="addToCart(product)"
+                    x-text="inCart ? 'Remove from Cart' : 'Add to Cart'"
+                  ></button>
                 </div>
-                <button
-                  :class="inCart? 'remove-from-cart-btn': 'add-to-cart-btn'"
-                  @click="addToCart(product)"
-                  x-text="inCart ? 'Remove from Cart' : 'Add to Cart'"
-                ></button>
               </div>
-            </div>
-          </template>
-        </div>
-      </section>
-      <section
-        x-data="{
+            </template>
+          </div>
+        </section>
+        <section
+          x-data="{
         total: 0,
         subtotal: 0,
         tax: 0.1,
@@ -393,90 +417,91 @@
           return words.join(' ')
         },
       }"
-        x-init="$watch('cart', value => calculateTotal());"
-      >
-        <h1>Cart</h1>
-        <template x-for="cartItem in cart" :key="cartItem.id">
-          <div class="cart-item">
-            <h3 x-text="cartItem.title"></h3>
-            <p
-              x-text="`$${(cartItem.price_cents / 100).toFixed(2)} x ${cartItem.quantity}`"
-            ></p>
-            <p>
-              <span>Item total - </span
-              ><span
-                x-text="`$${(cartItem.quantity * cartItem.price_cents / 100).toFixed(2)}`"
-              ></span>
-            </p>
-            <button
-              class="remove-from-cart-btn"
-              @click="cart = cart.filter(item => item.id !== cartItem.id)"
-            >
-              Remove
-            </button>
-          </div>
-        </template>
-        <div class="totals">
-          <h2>Subtotal</h2>
-          <p x-text="`$${(subtotal / 100).toFixed(2)}`"></p>
-          <h2>Tax</h2>
-          <p x-text="`${tax * 100}%`"></p>
-          <h2>Total</h2>
-          <p x-text="`$${(total / 100).toFixed(2)}`"></p>
-        </div>
-        <div>
-          <template
-            x-for="[key, value] in Object.entries(orderErrs)"
-            :key="key"
-          >
-            <div class="error-msg">
-              <template x-if="typeof value === 'string'">
-                <span x-text="value"></span>
-              </template>
-
-              <template
-                x-if="typeof value === 'object' && value !== null && !Array.isArray(value)"
+          x-init="$watch('cart', value => calculateTotal());"
+        >
+          <h1>Cart</h1>
+          <template x-for="cartItem in cart" :key="cartItem.id">
+            <div class="cart-item">
+              <h3 x-text="cartItem.title"></h3>
+              <p
+                x-text="`$${(cartItem.price_cents / 100).toFixed(2)} x ${cartItem.quantity}`"
+              ></p>
+              <p>
+                <span>Item total - </span
+                ><span
+                  x-text="`$${(cartItem.quantity * cartItem.price_cents / 100).toFixed(2)}`"
+                ></span>
+              </p>
+              <button
+                class="remove-from-cart-btn"
+                @click="cart = cart.filter(item => item.id !== cartItem.id)"
               >
-                <template
-                  x-for="[nestedKey, nestedValue] in Object.entries(value)"
-                  :key="nestedKey"
-                  ><div>
-                    <span
-                      x-text="`${readableKey(nestedKey)}: `"
-                      style="text-transform: capitalize"
-                    ></span>
-                    <span x-text="nestedValue[0]"></span></div
-                ></template>
-              </template>
+                Remove
+              </button>
             </div>
           </template>
-        </div>
-        <form @submit="placeOrder">
-          <label for="email-input" style="text-transform: capitalize"
-            >contact email</label
-          >
-          <input type="text" x-model="contact_email" id="email-input" />
-          <template x-if="placeOrderStatus >= 200 && placeOrderStatus <= 204">
-            <p class="success-msg">Order placed successfully</p>
-          </template>
-          <button type="submit" class="place-order">Place Order</button>
-        </form>
-        <form
-          @submit="confirmOrder"
-          x-show="placeOrderStatus >= 200 && placeOrderStatus <= 204"
-        >
-          <div id="payment-element">
-            <!-- Stripe.js injects the Payment Element -->
+          <div class="totals">
+            <h2>Subtotal</h2>
+            <p x-text="`$${(subtotal / 100).toFixed(2)}`"></p>
+            <h2>Tax</h2>
+            <p x-text="`${tax * 100}%`"></p>
+            <h2>Total</h2>
+            <p x-text="`$${(total / 100).toFixed(2)}`"></p>
           </div>
-          <button type="submit" class="pay-for-order">Pay now</button>
-          <p x-text="paymentErrs"></p>
-          <template
-            x-if="confirmOrderStatus >= 200 && confirmOrderStatus <= 204"
+          <div>
+            <template
+              x-for="[key, value] in Object.entries(orderErrs)"
+              :key="key"
+            >
+              <div class="error-msg">
+                <template x-if="typeof value === 'string'">
+                  <span x-text="value"></span>
+                </template>
+
+                <template
+                  x-if="typeof value === 'object' && value !== null && !Array.isArray(value)"
+                >
+                  <template
+                    x-for="[nestedKey, nestedValue] in Object.entries(value)"
+                    :key="nestedKey"
+                    ><div>
+                      <span
+                        x-text="`${readableKey(nestedKey)}: `"
+                        style="text-transform: capitalize"
+                      ></span>
+                      <span x-text="nestedValue[0]"></span></div
+                  ></template>
+                </template>
+              </div>
+            </template>
+          </div>
+          <form @submit="placeOrder">
+            <label for="email-input" style="text-transform: capitalize"
+              >contact email</label
+            >
+            <input type="text" x-model="contact_email" id="email-input" />
+            <template x-if="placeOrderStatus >= 200 && placeOrderStatus <= 204">
+              <p class="success-msg">Order placed successfully</p>
+            </template>
+            <button type="submit" class="place-order">Place Order</button>
+          </form>
+          <form
+            @submit="confirmOrder"
+            x-show="placeOrderStatus >= 200 && placeOrderStatus <= 204"
           >
-            <p>Order paid for successfully</p>
-          </template>
-        </form>
-      </section>
+            <div id="payment-element">
+              <!-- Stripe.js injects the Payment Element -->
+            </div>
+            <button type="submit" class="pay-for-order">Pay now</button>
+            <p x-text="paymentErrs"></p>
+            <template
+              x-if="confirmOrderStatus >= 200 && confirmOrderStatus <= 204"
+            >
+              <p>Order paid for successfully</p>
+            </template>
+          </form>
+        </section>
+      </div>
     </main>
   </body>
   <script src="//unpkg.com/alpinejs" defer></script>
