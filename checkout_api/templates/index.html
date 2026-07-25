@@ -26,7 +26,6 @@
 
       h1 {
         text-transform: uppercase;
-        margin-bottom: 5rem;
       }
 
       h2 {
@@ -235,6 +234,20 @@
         margin-bottom: 0;
       }
 
+      .heading h1 {
+        margin-bottom: 1rem;
+      }
+
+      .heading p {
+        margin-bottom: 2rem;
+      }
+
+      [class^="ri-corner-"],
+      [class*=" ri-corner-"] {
+        font-size: 3rem;
+        vertical-align: top;
+      }
+
       @media (max-width: 600px) {
         main {
           flex-direction: column;
@@ -269,7 +282,13 @@
       </div>
       <div class="container">
         <section>
-          <h1>Product Order</h1>
+          <div class="heading">
+            <h1>Product Order</h1>
+            <p>
+              As you can see, the project is capable of Cart management
+              <i class="ri-corner-right-down-line"></i>
+            </p>
+          </div>
           <div class="product-list">
             <template x-for="product in products" :key="product.id">
               <div
@@ -419,7 +438,13 @@
       }"
           x-init="$watch('cart', value => calculateTotal());"
         >
-          <h1>Cart</h1>
+          <div class="heading">
+            <h1>Cart</h1>
+            <p>
+              Cart management includes calculating the totals
+              <i class="ri-corner-right-down-line"></i>
+            </p>
+          </div>
           <template x-for="cartItem in cart" :key="cartItem.id">
             <div class="cart-item">
               <h3 x-text="cartItem.title"></h3>
@@ -476,6 +501,13 @@
             </template>
           </div>
           <form @submit="placeOrder">
+            <div class="heading">
+              <p>
+                Placing order with "test@test.com" or something will create the
+                order and items in DB and create a Stripe Payment Intent
+                <i class="ri-corner-right-down-line"></i>
+              </p>
+            </div>
             <label for="email-input" style="text-transform: capitalize"
               >contact email</label
             >
@@ -483,6 +515,7 @@
             <template x-if="placeOrderStatus >= 200 && placeOrderStatus <= 204">
               <p class="success-msg">Order placed successfully</p>
             </template>
+
             <button type="submit" class="place-order">Place Order</button>
           </form>
           <form
