@@ -129,7 +129,7 @@
         padding: 0.2rem 0.8rem;
         border-radius: 0.5rem;
         background-color: #ffffff;
-        box-shadow: 0rem 0rem 3rem 0rem rgba(0, 0, 0, 0.35);
+        box-shadow: 0rem 0rem 3rem 0rem rgba(0, 0, 0, 0.25);
       }
       .stock-qtty span {
         margin: 0 0.5rem;
@@ -271,13 +271,13 @@
       x-init="products = await (await fetch('/api/checkout/demo-products/')).json()"
     >
       <div class="hero">
-        <h1>A Microservice <br />Showcase Project</h1>
+        <h1>
+          <span style="font-size: 2rem">A</span> Microservice <br />Showcase
+          <span style="font-size: 2rem">Project</span>
+        </h1>
         <p>
-          Here we must run down everything that this project is capable of
-          doing, however small they might seem. For example, the UI stuff, the
-          payment stripe, the backend handling of the payment, and then finally
-          the microservice part, where you get mail after the payment after
-          being on queue.
+          You're free to interact with everything here. Everything is in sandbox
+          mode and doesn't involve real transactions.
         </p>
       </div>
       <div class="container">
@@ -474,6 +474,13 @@
             <p x-text="`$${(total / 100).toFixed(2)}`"></p>
           </div>
           <div>
+            <div class="heading">
+              <p>
+                Placing order with "test@test.com" or something will create the
+                order and items in DB and create a Stripe Payment Intent
+                <i class="ri-corner-right-down-line"></i>
+              </p>
+            </div>
             <template
               x-for="[key, value] in Object.entries(orderErrs)"
               :key="key"
@@ -501,13 +508,6 @@
             </template>
           </div>
           <form @submit="placeOrder">
-            <div class="heading">
-              <p>
-                Placing order with "test@test.com" or something will create the
-                order and items in DB and create a Stripe Payment Intent
-                <i class="ri-corner-right-down-line"></i>
-              </p>
-            </div>
             <label for="email-input" style="text-transform: capitalize"
               >contact email</label
             >
@@ -522,6 +522,15 @@
             @submit="confirmOrder"
             x-show="placeOrderStatus >= 200 && placeOrderStatus <= 204"
           >
+            <div class="heading">
+              <p>
+                After Stripe Client has confirmed the Payment Intent, Stripe
+                Dashboard listens for the confirmation and triggers a Webhook
+                endpoint in the backend. The Webhook manipulates the DB entries
+                and sends an EMAIL of the totals to "test@test.com"
+                <i class="ri-corner-right-down-line"></i>
+              </p>
+            </div>
             <div id="payment-element">
               <!-- Stripe.js injects the Payment Element -->
             </div>
