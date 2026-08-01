@@ -6,6 +6,7 @@ services:
     environment:
       POSTGRES_DB: ${POSTGRES_DB}
       POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_HOST: ${POSTGRES_HOST}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     healthcheck:
       # This command checks if Postgres is actually accepting connections
@@ -33,7 +34,7 @@ services:
     build: .
     ports:
       - "8000:8000"
-    command: sh -c "python manage.py migrate && python manage.py seed_products && python manage.py runserver 0.0.0.0:8000"
+    command: sh -c "python manage.py migrate && python manage.py runserver 0.0.0.0:8000"
     develop:
       watch:
         - action: sync
@@ -49,8 +50,15 @@ services:
       HOST: 0.0.0.0
       POSTGRES_DB: ${POSTGRES_DB}
       POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_HOST: ${POSTGRES_HOST}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY}
+      STRIPE_PUBLISHABLE_KEY: ${STRIPE_PUBLISHABLE_KEY}
+      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET}
+      CELERY_BROKER_URL: ${CELERY_BROKER_URL}
+      PROJECT_SECRET_KEY: ${PROJECT_SECRET_KEY}
+      DEBUG_MODE: ${DEBUG_MODE}
+      ALLOWED_HOST: ${ALLOWED_HOST}
     depends_on:
       postgres:
         condition: service_healthy
@@ -72,7 +80,11 @@ services:
       DEFAULT_FROM_EMAIL: ${DEFAULT_FROM_EMAIL}
       POSTGRES_DB: ${POSTGRES_DB}
       POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_HOST: ${POSTGRES_HOST}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      PROJECT_SECRET_KEY: ${PROJECT_SECRET_KEY}
+      DEBUG_MODE: ${DEBUG_MODE}
+      ALLOWED_HOST: ${ALLOWED_HOST}
     depends_on:
       postgres:
         condition: service_healthy
