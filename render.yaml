@@ -1,0 +1,6 @@
+services:
+  name: postgres
+  type: pserv
+  runtime: image
+
+# https://render.com/docs/blueprint-spec#service-fields
