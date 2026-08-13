@@ -1,6 +1,116 @@
 services:
-  name: postgres
-  type: pserv
-  runtime: image
+  # Postgres container (consider using Render's managed Postgres in production)
+  - type: background
+    name: postgres
+    env: docker
+    # use image to run Postgres directly
+    image: postgres:18.1-alpine
+    envVars:
+      - key: POSTGRES_DB
+        value: ${POSTGRES_DB}
+      - key: POSTGRES_USER
+        value: ${POSTGRES_USER}
+      - key: POSTGRES_PASSWORD
+        value: ${POSTGRES_PASSWORD}
+    # optional: expose the default port to allow other services to connect via public URL if needed
+    # Note: Render services are separate; prefer using public or private service URLs between services.
+    healthCheckPath: ""
+    # Increase shared memory if required by your DB workloads (Render doesn't expose shm_size here)
 
-# https://render.com/docs/blueprint-spec#service-fields
+  # Redis container
+  - type: background
+    name: redis
+    env: docker
+    image: redis:8.2-alpine
+
+  # Adminer UI (optional)
+  - type: web
+    name: adminer
+    env: docker
+    image: adminer
+    envVars:
+      - key: PORT
+        value: "8080"
+    # Adminer will be reachable at https://adminer-<your-render-app>.onrender.com
+
+  # MailHog (web UI + SMTP)
+  - type: web
+    name: mailhog
+    env: docker
+    image: mailhog/mailhog:v1.0.1
+    envVars:
+      - key: PORT
+        value: "8025"
+    # SMTP (1025) is internal to the container; MailHog's UI will be on PORT 8025
+
+  # API web service (Django/FastAPI app)
+  - type: web
+    name: api
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    startCommand: sh -c "python manage.py migrate && python manage.py runserver 0.0.0.0:${PORT}"
+    envVars:
+      - key: PORT
+        value: "8000"
+      - key: HOST
+        value: "0.0.0.0"
+      - key: CELERY_BROKER_URL
+        value: "redis://redis:6379"
+      - key: POSTGRES_DB
+        value: ${POSTGRES_DB}
+      - key: POSTGRES_USER
+        value: ${POSTGRES_USER}
+      - key: POSTGRES_HOST
+        value: ${POSTGRES_HOST}
+      - key: POSTGRES_PASSWORD
+        value: ${POSTGRES_PASSWORD}
+      - key: STRIPE_SECRET_KEY
+        value: ${STRIPE_SECRET_KEY}
+      - key: STRIPE_PUBLISHABLE_KEY
+        value: ${STRIPE_PUBLISHABLE_KEY}
+      - key: STRIPE_WEBHOOK_SECRET
+        value: ${STRIPE_WEBHOOK_SECRET}
+      - key: PROJECT_SECRET_KEY
+        value: ${PROJECT_SECRET_KEY}
+      - key: DEBUG_MODE
+        value: ${DEBUG_MODE}
+      - key: ALLOWED_HOST
+        value: ${ALLOWED_HOST}
+
+  # Celery worker (background)
+  - type: background
+    name: worker
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    startCommand: celery -A commerceproject worker -l INFO
+    envVars:
+      - key: CELERY_BROKER_URL
+        value: "redis://redis:6379"
+      - key: EMAIL_HOST
+        value: ${EMAIL_HOST}
+      - key: EMAIL_PORT
+        value: ${EMAIL_PORT}
+      - key: EMAIL_HOST_USER
+        value: ${EMAIL_HOST_USER}
+      - key: EMAIL_HOST_PASSWORD
+        value: ${EMAIL_HOST_PASSWORD}
+      - key: EMAIL_USE_TLS
+        value: ${EMAIL_USE_TLS}
+      - key: EMAIL_USE_SSL
+        value: ${EMAIL_USE_SSL}
+      - key: DEFAULT_FROM_EMAIL
+        value: ${DEFAULT_FROM_EMAIL}
+      - key: POSTGRES_DB
+        value: ${POSTGRES_DB}
+      - key: POSTGRES_USER
+        value: ${POSTGRES_USER}
+      - key: POSTGRES_HOST
+        value: ${POSTGRES_HOST}
+      - key: POSTGRES_PASSWORD
+        value: ${POSTGRES_PASSWORD}
+      - key: PROJECT_SECRET_KEY
+        value: ${PROJECT_SECRET_KEY}
+      - key: DEBUG_MODE
+        value: ${DEBUG_MODE}
+      - key: ALLOWED_HOST
+        value: ${ALLOWED_HOST}
