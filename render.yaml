@@ -1,11 +1,10 @@
 services:
   # Postgres container (consider using Render's managed Postgres in production)
-  - type: background
-    name: postgres
-    env: docker
-    # use image to run Postgres directly
-    image: postgres:18.1-alpine
-    envVars:
+  name: postgres
+  type: pserv
+  image: 
+    url: docker.io/library/postgres:18.1-alpine
+  envVars:
       - key: POSTGRES_DB
         value: ${POSTGRES_DB}
       - key: POSTGRES_USER
