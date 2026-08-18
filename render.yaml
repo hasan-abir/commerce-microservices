@@ -1,20 +1,18 @@
 services:
-  # Postgres container (consider using Render's managed Postgres in production)
+  # Postgres container
   name: postgres
   type: pserv
   image: 
     url: docker.io/library/postgres:18.1-alpine
   envVars:
+  # Define in Render Dashboard
       - key: POSTGRES_DB
-        value: ${POSTGRES_DB}
+        sync: false
       - key: POSTGRES_USER
-        value: ${POSTGRES_USER}
+        sync: false
       - key: POSTGRES_PASSWORD
-        value: ${POSTGRES_PASSWORD}
-    # optional: expose the default port to allow other services to connect via public URL if needed
-    # Note: Render services are separate; prefer using public or private service URLs between services.
-    healthCheckPath: ""
-    # Increase shared memory if required by your DB workloads (Render doesn't expose shm_size here)
+        sync: false
+    healthCheckPath: /
 
   # Redis container
   - type: background
@@ -113,3 +111,11 @@ services:
         value: ${DEBUG_MODE}
       - key: ALLOWED_HOST
         value: ${ALLOWED_HOST}
+
+envVarGroups:
+  - name: render-env-group
+    envVars:
+      - key: POSTGRES_DB
+        sync: false
+      - key: POSTGRES_DB
+        sync: false
