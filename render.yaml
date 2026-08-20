@@ -1,46 +1,31 @@
 services:
   # Postgres container
-  name: postgres
-  type: pserv
-  image: 
-    url: docker.io/library/postgres:18.1-alpine
-  envVars:
-  # Define in Render Dashboard
-      - key: POSTGRES_DB
-        sync: false
-      - key: POSTGRES_USER
-        sync: false
-      - key: POSTGRES_PASSWORD
-        sync: false
-    healthCheckPath: /
+  - type: pserv
+    name: postgres
+    image: 
+      url: docker.io/library/postgres:18.1-alpine
+    envVars:
+    # Define in Render Dashboard
+        - key: POSTGRES_DB
+          sync: false
+        - key: POSTGRES_USER
+          sync: false
+        - key: POSTGRES_PASSWORD
+          sync: false
+      healthCheckPath: /
 
   # Redis container
-  - type: background
+  - type: pserv
     name: redis
-    env: docker
-    image: redis:8.2-alpine
-
-  # Adminer UI (optional)
-  - type: web
-    name: adminer
-    env: docker
-    image: adminer
-    envVars:
-      - key: PORT
-        value: "8080"
-    # Adminer will be reachable at https://adminer-<your-render-app>.onrender.com
+    image: 
+      url: docker.io/library/redis:8.2-alpine
 
   # MailHog (web UI + SMTP)
   - type: web
     name: mailhog
-    env: docker
-    image: mailhog/mailhog:v1.0.1
-    envVars:
-      - key: PORT
-        value: "8025"
-    # SMTP (1025) is internal to the container; MailHog's UI will be on PORT 8025
+    image: 
+      url: docker.io/library/mailhog/mailhog:v1.0.1
 
-  # API web service (Django/FastAPI app)
   - type: web
     name: api
     runtime: docker
