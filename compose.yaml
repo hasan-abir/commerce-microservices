@@ -1,16 +1,11 @@
-#Start from scratch
-
 services:
   postgres:
     image: postgres:18.1-alpine
     restart: always
     shm_size: 128mb
     environment:
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_PASSWORD: example
     healthcheck:
-      # This command checks if Postgres is actually accepting connections
       test:
         [
           "CMD-SHELL",
@@ -24,71 +19,3 @@ services:
     restart: always
     ports:
       - 8080:8080
-  # redis:
-  #   image: redis:8.2-alpine
-  # mailhog:
-  #   image: mailhog/mailhog:v1.0.1
-  #   ports:
-  #     - "1025:1025"
-  #     - "8025:8025"
-  # api:
-  #   build: .
-  #   ports:
-  #     - "8000:8000"
-  #   command: sh -c "python manage.py migrate && python manage.py runserver 0.0.0.0:8000"
-  #   develop:
-  #     watch:
-  #       - action: sync
-  #         path: ./
-  #         target: /usr/src/app/
-  #         initial_sync: true
-  #         ignore:
-  #           - env/
-  #       - action: rebuild
-  #         path: requirements.txt
-  #   environment:
-  #     CELERY_BROKER_URL: redis://redis:6379
-  #     HOST: 0.0.0.0
-  #     POSTGRES_DB: ${POSTGRES_DB}
-  #     POSTGRES_USER: ${POSTGRES_USER}
-  #     POSTGRES_HOST: ${POSTGRES_HOST}
-  #     POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-  #     STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY}
-  #     STRIPE_PUBLISHABLE_KEY: ${STRIPE_PUBLISHABLE_KEY}
-  #     STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET}
-  #     PROJECT_SECRET_KEY: ${PROJECT_SECRET_KEY}
-  #     DEBUG_MODE: ${DEBUG_MODE}
-  #     ALLOWED_HOST: ${ALLOWED_HOST}
-  #   depends_on:
-  #     postgres:
-  #       condition: service_healthy
-  #     redis:
-  #       condition: service_started
-  #     mailhog:
-  #       condition: service_started
-  # worker:
-  #   build: .
-  #   command: celery -A commerceproject worker -l INFO
-  #   environment:
-  #     CELERY_BROKER_URL: redis://redis:6379
-  #     EMAIL_HOST: ${EMAIL_HOST}
-  #     EMAIL_PORT: ${EMAIL_PORT}
-  #     EMAIL_HOST_USER: ${EMAIL_HOST_USER}
-  #     EMAIL_HOST_PASSWORD: ${EMAIL_HOST_PASSWORD}
-  #     EMAIL_USE_TLS: ${EMAIL_USE_TLS}
-  #     EMAIL_USE_SSL: ${EMAIL_USE_SSL}
-  #     DEFAULT_FROM_EMAIL: ${DEFAULT_FROM_EMAIL}
-  #     POSTGRES_DB: ${POSTGRES_DB}
-  #     POSTGRES_USER: ${POSTGRES_USER}
-  #     POSTGRES_HOST: ${POSTGRES_HOST}
-  #     POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-  #     PROJECT_SECRET_KEY: ${PROJECT_SECRET_KEY}
-  #     DEBUG_MODE: ${DEBUG_MODE}
-  #     ALLOWED_HOST: ${ALLOWED_HOST}
-  #   depends_on:
-  #     postgres:
-  #       condition: service_healthy
-  #     redis:
-  #       condition: service_started
-  #     mailhog:
-  #       condition: service_started
