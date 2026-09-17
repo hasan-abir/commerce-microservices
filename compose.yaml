@@ -1,19 +1,11 @@
 services:
-  postgres:
+  db:
     image: postgres:18.1-alpine
     restart: always
     shm_size: 128mb
     environment:
-      POSTGRES_PASSWORD: example
-    healthcheck:
-      test:
-        [
-          "CMD-SHELL",
-          "pg_isready -U ${POSTGRES_USER:-exampleuser} -d ${POSTGRES_DB:-commerceproject}",
-        ]
-      interval: 5s
-      timeout: 5s
-      retries: 5
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
   adminer:
     image: adminer
     restart: always
