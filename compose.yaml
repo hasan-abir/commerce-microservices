@@ -6,8 +6,35 @@ services:
     environment:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: ${POSTGRES_DB}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
   adminer:
     image: adminer
     restart: always
     ports:
       - 8080:8080
+  api:
+    build: .
+    ports:
+      - "8000:8000"
+    command: sh -c "python manage.py migrate && python manage.py runserver 0.0.0.0:8000"
+    environment:
+      CELERY_BROKER_URL: redis://redis:6379
+      HOST: 0.0.0.0
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_HOST: ${POSTGRES_HOST}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY}
+      STRIPE_PUBLISHABLE_KEY: ${STRIPE_PUBLISHABLE_KEY}
+      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET}
+      PROJECT_SECRET_KEY: ${PROJECT_SECRET_KEY}
+      DEBUG_MODE: ${DEBUG_MODE}
+      ALLOWED_HOST: ${ALLOWED_HOST}
+    depends_on:
+      db:
+        condition: service_healthy
