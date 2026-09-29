@@ -1,8 +1,12 @@
 from mail_dispatch_api.services import sendmail_service
 from checkout_api.models import OrderItem, Order
 
-def sendreciept_service(order_pk):
-    reciept = create_reciept(order_pk)
+def sendreciept_service(payment_intent_id):
+    order = Order.objects.get(payment_intent_id=payment_intent_id)
+    order.status = Order.PAID
+    order.save()
+
+    reciept = create_reciept(order.pk)
     msg_content = "Order Receipt\n"
     msg_content += "-----------------\n"
 

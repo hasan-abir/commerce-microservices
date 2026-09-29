@@ -112,25 +112,13 @@ class StripeWebhookView(generics.CreateAPIView):
         if event.type == 'payment_intent.succeeded':
             payment_intent = event.data.object
 
-            order = Order.objects.get(payment_intent_id=payment_intent['id'])
+            sendreciept_task.delay(payment_intent['id'])
 
-            order.status = Order.PAID
-
-            order.save()
-
-            sendreciept_task.delay(order.pk)
-
-            return Response({'msg': "Order paid successfully!", 'status': status.HTTP_200_OK})
+            return Response({'msg': "Order paid successfully!", 'status': status.HTTP_200_OK, })
         elif event.type == 'payment_intent.payment_failed':
             payment_intent = event.data.object
 
-            order = Order.objects.get(payment_intent_id=payment_intent['id'])
-
-            order.status = Order.CANCELLED
-
-            order.save()
-
-            sendreciept_task.delay(order.pk)
+            sendreciept_task.delay(payment_intent['id'])
             
             return Response({'msg': 'Order failed and cancelled!'}, status=status.
             HTTP_400_BAD_REQUEST) 
