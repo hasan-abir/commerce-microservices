@@ -9,6 +9,7 @@ import json
 from django.conf import settings
 import logging
 from checkout_api.tasks import sendreciept_task
+from mail_dispatch_api.tasks import sendmail_task
 from django.views.generic import TemplateView
 
 logger = logging.getLogger(__name__)
@@ -84,6 +85,16 @@ class PlaceOrderView(generics.CreateAPIView):
     
 class StripeWebhookView(generics.CreateAPIView):
     serializer_class = StripeWebhookSerializer
+
+    # Test endpoint
+    def get(self, request):
+        sendmail_task.delay({
+            "recipient": "recipient@test.com",
+            "subject": "Test Subject",
+            "msg_content": "Hello!"
+        })
+
+        return Response({'msg': "Order paid successfully!", 'status': status.HTTP_200_OK, })
 
     def create(self, request):
         # Frontend will provide it
