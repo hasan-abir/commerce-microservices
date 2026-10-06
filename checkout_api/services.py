@@ -16,8 +16,6 @@ def sendreciept_service(payment_intent_id):
     msg_content += "-----------------\n"
     msg_content += f"TOTAL: ${reciept['totals']}"
 
-    order = Order.objects.get(pk=order_pk)
-
     email = {
         'msg_content': msg_content,
         'subject': 'Order paid for',

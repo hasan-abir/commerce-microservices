@@ -10,8 +10,8 @@ services:
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -d ${POSTGRES_DB} -U ${POSTGRES_USER}"]
       interval: 5s
-      timeout: 5s
-      retries: 5
+      timeout: 180s
+      retries: 36
   adminer:
     image: adminer
     restart: always
@@ -30,7 +30,7 @@ services:
     environment:
       CELERY_BROKER_URL: redis://redis:6379
       HOST: 0.0.0.0
-      EMAIL_HOST: ${EMAIL_HOST}
+      EMAIL_HOST: mailhog
       EMAIL_PORT: ${EMAIL_PORT}
       EMAIL_HOST_USER: ${EMAIL_HOST_USER}
       EMAIL_HOST_PASSWORD: ${EMAIL_HOST_PASSWORD}
