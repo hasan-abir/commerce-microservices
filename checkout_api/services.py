@@ -17,9 +17,9 @@ def sendreciept_service(payment_intent_id):
     msg_content += f"TOTAL: ${reciept['totals']}"
 
     email = {
-        'msg_content': msg_content,
-        'subject': 'Order paid for',
-        'recipient': order.contact_email
+        "recipient": order.contact_email,
+        "subject": "Order paid for",
+        "msg_content": msg_content,
     }
 
     sendmail_service(email)

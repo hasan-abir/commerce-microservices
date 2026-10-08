@@ -94,7 +94,7 @@ class StripeWebhookView(generics.CreateAPIView):
             "msg_content": "Hello!"
         })
 
-        return Response({'msg': "Order paid successfully!", 'status': status.HTTP_200_OK, })
+        return Response({'msg': "Order paid successfully!", 'status': status.HTTP_200_OK})
 
     def create(self, request):
         # Frontend will provide it
@@ -118,6 +118,8 @@ class StripeWebhookView(generics.CreateAPIView):
             except stripe.error.SignatureVerificationError as e:
                 print('⚠️  Webhook signature verification failed.' + str(e))
                 return Response({'success': False}, status=status.HTTP_401_UNAUTHORIZED)
+        else:
+            return Response({'success': False}, status=status.HTTP_401_UNAUTHORIZED)
 
         # validate payment status
         if event.type == 'payment_intent.succeeded':
@@ -125,7 +127,7 @@ class StripeWebhookView(generics.CreateAPIView):
 
             sendreciept_task.delay(payment_intent['id'])
 
-            return Response({'msg': "Order paid successfully!", 'status': status.HTTP_200_OK, })
+            return Response({'msg': "Order paid successfully!", 'status': status.HTTP_200_OK})
         elif event.type == 'payment_intent.payment_failed':
             payment_intent = event.data.object
 
