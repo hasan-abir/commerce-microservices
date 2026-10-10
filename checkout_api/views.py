@@ -81,7 +81,7 @@ class PlaceOrderView(generics.CreateAPIView):
             orderitems_err = order_items
             return Response(orderitems_err, status=status.HTTP_400_BAD_REQUEST)
 
-        return Response({'clientSecret': intent['client_secret'], 'totals': totals, 'msg': "Order drafted! Now complete the payment to confirm it.", 'status': status.HTTP_200_OK})
+        return Response({'clientSecret': intent['client_secret'], 'totals': totals, 'msg': "Order drafted! Now complete the payment to confirm it."}, status=status.HTTP_200_OK)
     
 class StripeWebhookView(generics.CreateAPIView):
     serializer_class = StripeWebhookSerializer
@@ -127,7 +127,7 @@ class StripeWebhookView(generics.CreateAPIView):
 
             sendreciept_task.delay(payment_intent['id'])
 
-            return Response({'msg': "Order paid successfully!", 'status': status.HTTP_200_OK})
+            return Response({'msg': "Order paid successfully!"}, status=status.HTTP_200_OK)
         elif event.type == 'payment_intent.payment_failed':
             payment_intent = event.data.object
 

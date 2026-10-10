@@ -10,17 +10,21 @@
 The ENV variables that are required:
 
 ```
+PROJECT_SECRET_KEY=
 DEFAULT_FROM_EMAIL=
-
 POSTGRES_DB=
 POSTGRES_USER=
 POSTGRES_PASSWORD=
+STRIPE_SECRET_KEY=
+STRIPE_PUBLISHABLE_KEY=
+STRIPE_WEBHOOK_SECRET=
+ALLOWED_HOST=
+DEBUG_MODE=
 ```
 
 And that are optional but recommended:
 
 ```
-EMAIL_HOST=
 EMAIL_PORT=
 EMAIL_HOST_USER=
 EMAIL_HOST_PASSWORD=
@@ -36,7 +40,7 @@ By default, this project uses Mailhog as a dummy email host, but it's easy enoug
 
 ## Run with Docker (recommended)
 
-`docker compose up --build --watch`
+`docker compose up --build`
 
 Add `sudo` beforehand if permission is required
 
