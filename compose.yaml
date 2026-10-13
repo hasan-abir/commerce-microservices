@@ -47,8 +47,8 @@ services:
     healthcheck:
       test: ["CMD-SHELL", "celery -A commerceproject status || exit 1"]
       interval: 5s
-      timeout: 5s
-      retries: 5
+      timeout: 180s
+      retries: 36
     depends_on:
       db:
         condition: service_healthy

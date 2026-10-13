@@ -86,16 +86,6 @@ class PlaceOrderView(generics.CreateAPIView):
 class StripeWebhookView(generics.CreateAPIView):
     serializer_class = StripeWebhookSerializer
 
-    # Test endpoint
-    def get(self, request):
-        sendmail_task.delay({
-            "recipient": "recipient@test.com",
-            "subject": "Test Subject",
-            "msg_content": "Hello!"
-        })
-
-        return Response({'msg': "Order paid successfully!", 'status': status.HTTP_200_OK})
-
     def create(self, request):
         # Frontend will provide it
         payload = request.body
