@@ -130,13 +130,15 @@ class StripeWebhookView(generics.CreateAPIView):
 
 def calculate_totals(cart_items):
     totals = 0
+    tax = 0.1
 
     for index, cart_item in enumerate(cart_items):
         validated_data = cart_item
 
         matched_product = next((product for product in demo_products if product.get('id') == validated_data['product_id']), None)
-        
-        totals += matched_product['price_cents'] * validated_data['product_quantity']
+
+        subtotal = matched_product['price_cents'] * validated_data['product_quantity'] 
+        totals += round(subtotal * tax + subtotal)
 
     if totals < 50:
         return {'cart_items': 'Cart cannot be empty!'}

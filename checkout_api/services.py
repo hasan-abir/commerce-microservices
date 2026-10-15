@@ -6,7 +6,7 @@ def sendreciept_service(payment_intent_id):
     order.status = Order.PAID
     order.save()
 
-    reciept = create_reciept(order.pk)
+    reciept = create_reciept(order.pk, order.total)
     msg_content = "Order Receipt\n"
     msg_content += "-----------------\n"
 
@@ -25,18 +25,17 @@ def sendreciept_service(payment_intent_id):
     sendmail_service(email)
 
 
-def create_reciept(order_pk):
+def create_reciept(order_pk, totals):
     items = []
-    total_amount = 0
 
     order_items = OrderItem.objects.filter(order=order_pk)
 
     for item in order_items:
-        total_amount += item.price * item.quantity
+        total_amount = item.price * item.quantity
 
-        items.append({'title': item.title, 'quantity': item.quantity, 'price': item.price, 'total': item.price * item.quantity})
+        items.append({'title': item.title, 'quantity': item.quantity, 'price': item.price, 'total': total_amount})
 
     return {
         'items': items,
-        'totals': total_amount
+        'totals': totals
     }
