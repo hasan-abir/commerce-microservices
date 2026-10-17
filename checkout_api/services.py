@@ -1,5 +1,6 @@
 from mail_dispatch_api.services import sendmail_service
 from checkout_api.models import OrderItem, Order
+from decimal import *
 
 def sendreciept_service(payment_intent_id):
     order = Order.objects.get(payment_intent_id=payment_intent_id)
@@ -11,10 +12,16 @@ def sendreciept_service(payment_intent_id):
     msg_content += "-----------------\n"
 
     for item in reciept['items']:
-        msg_content += f"{item['title']} (x{item['quantity']}) - ${item['price']}\n"
+        price = round(Decimal(item['price']) / Decimal(100), 2)
+
+        msg_content += f"{item['title']} (x{item['quantity']}) - ${price}\n"
+
+    tax = '10%'
+    totals = round(Decimal(reciept['totals']) / Decimal(100), 2)
 
     msg_content += "-----------------\n"
-    msg_content += f"TOTAL: ${reciept['totals']}"
+    msg_content += f"TAX: ${tax}\n"
+    msg_content += f"TOTAL: ${totals}"
 
     email = {
         "recipient": order.contact_email,
