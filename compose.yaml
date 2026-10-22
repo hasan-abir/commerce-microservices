@@ -1,7 +1,9 @@
 services:
   stripe-cli:
     image: stripe/stripe-cli:v1.54.1
-    command: listen --api-key ${STRIPE_SECRET_KEY} --forward-to api:8000/api/checkout/webhook/ --events=payment_intent.succeeded
+    command: listen --api-key ${STRIPE_SECRET_KEY} --forward-to api:8000/api/checkout/webhook/ --events payment_intent.succeeded
+    depends_on:
+      - api
     environment:
       STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY}
   db:
@@ -17,9 +19,6 @@ services:
       interval: 5s
       timeout: 180s
       retries: 36
-    depends_on:
-      stripe-cli:
-        condition: service_started
   adminer:
     image: adminer
     restart: always
