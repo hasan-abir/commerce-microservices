@@ -41,7 +41,7 @@ By default, this project uses Mailhog as a dummy email host, but it's easy enoug
 ## Run with Docker (recommended)
 
 `docker compose up --build`
-`docker run --rm -it stripe/stripe-cli listen --api-key {STRIPE_SECRET_KEY} --forward-to http://host.docker.internal:8000/api/checkout/webhook/ --events payment_intent.succeeded`
+`docker run --rm -it --network commerce-microservices_default stripe/stripe-cli listen --api-key {STRIPE_SECRET_KEY} --forward-to http://host.docker.internal:8000/api/checkout/webhook/ --events payment_intent.succeeded`
 
 Add `sudo` beforehand if permission is required
 

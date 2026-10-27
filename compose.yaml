@@ -1,12 +1,4 @@
 services:
-  stripe-cli:
-    image: stripe/stripe-cli:v1.42.13
-    command: listen --api-key ${STRIPE_SECRET_KEY} --forward-to api:8000/api/checkout/webhook/ --events payment_intent.succeeded
-    environment:
-      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY}
-    depends_on:
-      api:
-        condition: service_started
   db:
     image: postgres:18.1-alpine
     restart: always

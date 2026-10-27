@@ -33,6 +33,7 @@ class ClientPaymentView(TemplateView):
 
 class ProductListView(generics.ListAPIView):
     serializer_class = ProductSerializer
+    print(stripe_api_key)
 
     def list(self, request):
         return Response(demo_products, status=status.HTTP_200_OK)
@@ -82,7 +83,7 @@ class PlaceOrderView(generics.CreateAPIView):
             return Response(orderitems_err, status=status.HTTP_400_BAD_REQUEST)
 
         return Response({'clientSecret': intent['client_secret'], 'totals': totals, 'msg': "Order drafted! Now complete the payment to confirm it."}, status=status.HTTP_200_OK)
-    
+
 class StripeWebhookView(generics.CreateAPIView):
     serializer_class = StripeWebhookSerializer
 
