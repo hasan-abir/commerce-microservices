@@ -33,7 +33,6 @@ class ClientPaymentView(TemplateView):
 
 class ProductListView(generics.ListAPIView):
     serializer_class = ProductSerializer
-    print(stripe_api_key)
 
     def list(self, request):
         return Response(demo_products, status=status.HTTP_200_OK)
