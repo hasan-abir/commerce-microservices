@@ -18,8 +18,8 @@ POSTGRES_PASSWORD=
 STRIPE_SECRET_KEY=
 STRIPE_PUBLISHABLE_KEY=
 STRIPE_WEBHOOK_SECRET=
-# This is so that the webhook can interact
-ALLOWED_HOST=host.docker.internal
+ALLOWED_HOST=
+# Needs to be false in production
 DEBUG_MODE=0
 ```
 

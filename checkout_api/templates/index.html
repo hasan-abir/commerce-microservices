@@ -300,10 +300,12 @@
               addToCart(product) {
                 if(this.inCart) {
                   cart = cart.filter(item => item.id !== product.id)
+
+                  this.quantity = 1
                 } else {
                   cart.push({...product, quantity: this.quantity})
                 }
-              }
+              },
             }"
               >
                 <h3 class="title" x-text="`${product.title}`"></h3>
