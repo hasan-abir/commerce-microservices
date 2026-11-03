@@ -10,27 +10,27 @@
 The ENV variables that are required:
 
 ```
-PROJECT_SECRET_KEY=
-DEFAULT_FROM_EMAIL=
+STRIPE_SECRET_KEY= # STRIPE DASHBOARD
 POSTGRES_DB=
 POSTGRES_USER=
+POSTGRES_HOST=
 POSTGRES_PASSWORD=
-STRIPE_SECRET_KEY=
-STRIPE_PUBLISHABLE_KEY=
-STRIPE_WEBHOOK_SECRET=
-ALLOWED_HOST=
-# Needs to be false in production
-DEBUG_MODE=0
+PROJECT_SECRET_KEY= # Any random key
+STRIPE_PUBLISHABLE_KEY= # STRIPE DASHBOARD
+STRIPE_WEBHOOK_SECRET= # "docker-compose up stripe-cli" will provide if ENV variables are in a .env file
+DEBUG_MODE=0 # Needs to be false in production
 ```
 
-And that are optional but recommended:
+And that are optional:
 
 ```
 EMAIL_PORT=
 EMAIL_HOST_USER=
 EMAIL_HOST_PASSWORD=
-EMAIL_USE_TLS= true or false
-EMAIL_USE_SSL= true or false
+EMAIL_USE_TLS=
+EMAIL_USE_SSL=
+DEFAULT_FROM_EMAIL=
+ALLOWED_HOST=
 ```
 
 ## Send Mail Microservice
@@ -42,7 +42,6 @@ By default, this project uses Mailhog as a dummy email host, but it's easy enoug
 ## Run with Docker (recommended)
 
 `docker compose up --build`
-`docker run --rm -it --network commerce-microservices_default stripe/stripe-cli listen --api-key [STRIPE_SECRET_KEY] --forward-to http://host.docker.internal:8000/api/checkout/webhook/ --events payment_intent.succeeded`
 
 Add `sudo` beforehand if permission is required
 
