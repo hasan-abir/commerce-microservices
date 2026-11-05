@@ -95,7 +95,8 @@ DATABASES = {
         "ENGINE": "django.db.backends.postgresql",
         "USER": os.environ.get('POSTGRES_USER') or 'exampleuser',
         "PASSWORD": os.environ.get('POSTGRES_PASSWORD') or 'testtest',
-        "HOST": os.environ.get('POSTGRES_HOST') or "db",
+        # "db" service from compose.yml
+        "HOST": "db",
         "PORT": "5432",
         "TEST": {
             "NAME": "commerceproject_test_db"
