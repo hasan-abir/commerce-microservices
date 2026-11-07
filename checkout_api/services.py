@@ -20,7 +20,7 @@ def sendreciept_service(payment_intent_id):
     totals = round(Decimal(reciept['totals']) / Decimal(100), 2)
 
     msg_content += "-----------------\n"
-    msg_content += f"TAX: ${tax}\n"
+    msg_content += f"TAX: {tax}\n"
     msg_content += f"TOTAL: ${totals}"
 
     email = {

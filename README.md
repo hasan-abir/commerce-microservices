@@ -17,7 +17,7 @@ POSTGRES_HOST=
 POSTGRES_PASSWORD=
 PROJECT_SECRET_KEY= # Any random key
 STRIPE_PUBLISHABLE_KEY= # STRIPE DASHBOARD
-STRIPE_WEBHOOK_SECRET= # "docker-compose up stripe-cli" will provide if ENV variables are in a .env file
+STRIPE_WEBHOOK_SECRET= # "docker-compose up stripe-cli" will provide if STRIPE_SECRET_KEY is in a .env file
 DEBUG_MODE=0 # Needs to be false in production
 ```
 
@@ -45,7 +45,7 @@ By default, this project uses Mailhog as a dummy email host, but it's easy enoug
 
 Add `sudo` beforehand if permission is required
 
-Go to `http://localhost:8000` to check the API docs and `http://localhost:8025` to check the email (if using mailhog)
+Go to `http://localhost:8000` to see and test the app running!
 
 ## Test with Docker too
 
