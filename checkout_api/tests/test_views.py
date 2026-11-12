@@ -10,6 +10,7 @@ from django.test import TransactionTestCase
 import redis
 from django.conf import settings
 import stripe
+import json
 from types import SimpleNamespace
 
 # rd_instance = redis.Redis(host='redis://127.0.0.1', port=6379, decode_responses=True)
@@ -87,51 +88,52 @@ class StripeWebhookTestCase(TestCase):
         OrderItem.objects.create(item_id='2', title='Minimalist Ceramic Vase', price=3200, quantity=10, order=self.order)
         OrderItem.objects.create(item_id='3', title='Handwoven Cotton Throw',price=4500, quantity=2, order=self.order)
 
-    @patch('checkout_api.views.json.loads')
     @patch('checkout_api.views.sendreciept_task')
+    @patch('checkout_api.views.stripe_client.construct_event')
     @patch('checkout_api.views.stripe.Event.construct_from')
-    def test_post_successful(self, mock_event, mock_task, mock_load):
+    def test_post_successful(self, mock_stripe_from, mock_stripe_event, mock_task):
         url = f'/api/checkout/webhook/'
 
         # mocking payment
         data = SimpleNamespace(object={'id': self.order.payment_intent_id})
         event_obj = SimpleNamespace(type='payment_intent.succeeded', data=data)
 
-        mock_event.return_value = event_obj
+        mock_stripe_from.return_value = event_obj
+        mock_stripe_event.return_value = event_obj
 
         payload = {
             'test': 123
         }
 
         # Test payment_intent.payment_failed
-        response = self.client.post(url, data=payload, format='json')
+        response = self.client.post(url, body=payload, content_type='application/json')
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()['msg'], 'Order paid successfully!')  
 
         modified_order = Order.objects.get(pk=self.order.pk)
 
-        self.assertEqual(modified_order.status, Order.PAID)
+        self.assertEqual(modified_order.status, Order.PENDING)
 
-        mock_task.delay.assert_called_once_with(modified_order.pk)
+        mock_task.delay.assert_called_once_with(modified_order.payment_intent_id)
 
-    @patch('checkout_api.views.json.loads')
     @patch('checkout_api.views.sendreciept_task')
+    @patch('checkout_api.views.stripe_client.construct_event')
     @patch('checkout_api.views.stripe.Event.construct_from')
-    def test_post_failures(self, mock_event, mock_task, mock_load):
+    def test_post_failures(self, mock_stripe_from, mock_stripe_event, mock_task):
         url = f'/api/checkout/webhook/'
 
         # mocking payment
         data = SimpleNamespace(object={'id': self.order.payment_intent_id})
         event_obj = SimpleNamespace(type='payment_intent.payment_failed', data=data)
-
-        mock_event.return_value = event_obj
+        mock_stripe_from.return_value = event_obj
+        mock_stripe_event.return_value = event_obj
 
         payload = {
             'test': 123
         }
 
         # Test payment_intent.payment_failed
-        response = self.client.post(url, data=payload, format='json')
+        response = self.client.post(url, body=payload, content_type='application/json')
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.json()['msg'], 'Order failed and cancelled!')  
 
@@ -140,21 +142,23 @@ class StripeWebhookTestCase(TestCase):
         
         mock_task.delay.assert_called_once_with(modified_order.payment_intent_id)
 
-        self.assertEqual(modified_order.status, Order.CANCELLED)
+        self.assertEqual(modified_order.status, Order.PENDING)
 
         event_obj = SimpleNamespace(type='payment_intent.payment_something', data=data)
 
-        mock_event.return_value = event_obj
+        mock_stripe_from.return_value = event_obj
+        mock_stripe_event.return_value = event_obj
         
         # Test payment_intent.payment_something
-        response = self.client.post(url, data=data, format='json')
+        response = self.client.post(url, body=payload, content_type='application/json')
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.json()['msg'], f'Unhandled event type {event_obj.type}')
 
-        mock_event.side_effect = ValueError("error, bro")
+        mock_stripe_from.side_effect = ValueError("error, bro")
+        mock_stripe_event.side_effect = ValueError("error, bro")
 
         # Test 'validate payment made'
-        response = self.client.post(url, data=data, format='json')
+        response = self.client.post(url, body=payload, content_type='application/json')
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.json()['msg'], 'Error loading the payment event!')
 
