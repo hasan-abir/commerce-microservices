@@ -114,7 +114,7 @@ class StripeWebhookTestCase(TestCase):
 
         self.assertEqual(modified_order.status, Order.PENDING)
 
-        mock_task.delay.assert_called_once_with(modified_order.payment_intent_id)
+        mock_task.delay.assert_called_once_with(modified_order.payment_intent_id, False)
 
     @patch('checkout_api.views.sendreciept_task')
     @patch('checkout_api.views.stripe_client.construct_event')
@@ -140,7 +140,7 @@ class StripeWebhookTestCase(TestCase):
 
         modified_order = Order.objects.get(pk=self.order.pk)
         
-        mock_task.delay.assert_called_once_with(modified_order.payment_intent_id)
+        mock_task.delay.assert_called_once_with(modified_order.payment_intent_id, True)
 
         self.assertEqual(modified_order.status, Order.PENDING)
 

@@ -2,10 +2,16 @@ from mail_dispatch_api.services import sendmail_service
 from checkout_api.models import OrderItem, Order
 from decimal import *
 
-def sendreciept_service(payment_intent_id):
+def sendreciept_service(payment_intent_id, cancelled):
+
     order = Order.objects.get(payment_intent_id=payment_intent_id)
-    order.status = Order.PAID
-    order.save()
+
+    if cancelled:
+        order.status = Order.CANCELLED
+        order.save()
+    else:      
+        order.status = Order.PAID
+        order.save()
 
     reciept = create_reciept(order.pk, order.total)
     msg_content = "Order Receipt\n"
@@ -23,9 +29,17 @@ def sendreciept_service(payment_intent_id):
     msg_content += f"TAX: {tax}\n"
     msg_content += f"TOTAL: ${totals}"
 
+    subject = "Order paid for"
+
+    if cancelled:
+        subject = "Order cancelled for"
+        msg_content += "\n-----------------\n"
+        msg_content += f"This Order has been cancelled!"
+
+
     email = {
         "recipient": order.contact_email,
-        "subject": "Order paid for",
+        "subject": subject,
         "msg_content": msg_content,
     }
 

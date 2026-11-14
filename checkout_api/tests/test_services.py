@@ -11,7 +11,22 @@ class SendRecieptServiceTestCase(TestCase):
         OrderItem.objects.create(item_id='3', title='Handwoven Cotton Throw',price=4500, quantity=2, order=self.order)
 
     @patch('checkout_api.services.sendmail_service')
-    def test_return(self, mock_mail):
-        sendreciept_service(self.order.payment_intent_id)
+    def test_success(self, mock_mail):
+        sendreciept_service(self.order.payment_intent_id, False)
 
         mock_mail.assert_called_once_with({'msg_content': 'Order Receipt\n-----------------\nHandwoven Cotton Throw (x2) - $45.00\nMinimalist Ceramic Vase (x10) - $32.00\nAbstract Horizon Painting (x4) - $55.00\n-----------------\nTAX: 10%\nTOTAL: $69.30', 'subject': 'Order paid for', 'recipient': 'test@test.com'})
+
+        modified_order = Order.objects.get(pk=self.order.pk)
+        
+        self.assertEqual(modified_order.status, Order.PAID)
+
+    
+    @patch('checkout_api.services.sendmail_service')
+    def test_cancelled(self, mock_mail):
+        sendreciept_service(self.order.payment_intent_id, True)
+
+        mock_mail.assert_called_once_with({'msg_content': 'Order Receipt\n-----------------\nHandwoven Cotton Throw (x2) - $45.00\nMinimalist Ceramic Vase (x10) - $32.00\nAbstract Horizon Painting (x4) - $55.00\n-----------------\nTAX: 10%\nTOTAL: $69.30\n-----------------\nThis Order has been cancelled!', 'subject': 'Order cancelled for', 'recipient': 'test@test.com'})
+
+        modified_order = Order.objects.get(pk=self.order.pk)
+        
+        self.assertEqual(modified_order.status, Order.CANCELLED)
