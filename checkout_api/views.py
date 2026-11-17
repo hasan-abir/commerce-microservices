@@ -106,10 +106,10 @@ class StripeWebhookView(generics.CreateAPIView):
                     payload, sig_header, stripe_webhook_secret
                 )
             except stripe.error.SignatureVerificationError as e:
-                print('⚠️  Webhook signature verification failed.' + str(e))
-                return Response({'success': False}, status=status.HTTP_401_UNAUTHORIZED)
+                print(str(e))
+                return Response({'msg': 'Webhook signature verification failed.'}, status=status.HTTP_401_UNAUTHORIZED)
         else:
-            return Response({'success': False}, status=status.HTTP_401_UNAUTHORIZED)
+            return Response({'msg': 'Webhook secret missing.'}, status=status.HTTP_401_UNAUTHORIZED)
 
         # validate payment status
         if event.type == 'payment_intent.succeeded':

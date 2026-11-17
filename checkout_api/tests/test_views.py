@@ -153,12 +153,19 @@ class StripeWebhookTestCase(TestCase):
         response = self.client.post(url, body=payload, content_type='application/json')
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.json()['msg'], f'Unhandled event type {event_obj.type}')
+        
+        mock_stripe_event.side_effect = stripe.error.SignatureVerificationError("webhook err", "some header")
+
+        # Test 'webhook errors'
+        response = self.client.post(url, body=payload, content_type='application/json')
+        self.assertEqual(response.status_code, 401)
+        self.assertEqual(response.json()['msg'], 'Webhook signature verification failed.')
 
         mock_stripe_from.side_effect = ValueError("error, bro")
-        mock_stripe_event.side_effect = ValueError("error, bro")
 
-        # Test 'validate payment made'
+        # Test 'validate payment event'
         response = self.client.post(url, body=payload, content_type='application/json')
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.json()['msg'], 'Error loading the payment event!')
+
 

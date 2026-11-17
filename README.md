@@ -45,11 +45,11 @@ By default, this project uses Mailhog as a dummy email host, but it's easy enoug
 
 Add `sudo` beforehand if permission is required
 
-Go to `http://localhost:8000` to see and test the app running!
+Go to `http://localhost:8000` and you'll find the app running!
 
 ## Test with Docker too
 
-While the server is running, run `docker compose exec api python manage.py test checkout_api.tests`
+While the server is running, in another terminal, run `docker compose exec api python manage.py test checkout_api.tests`
 
 ## Resources used
 
@@ -57,3 +57,4 @@ While the server is running, run `docker compose exec api python manage.py test 
 - [Celery configuration](https://docs.celeryq.dev/en/v5.5.3/django/first-steps-with-django.html)
 - [DRF](https://www.django-rest-framework.org/) and [Django](https://docs.djangoproject.com/en/6.0/)
 - [DRF spectacular](https://github.com/tfranzel/drf-spectacular)
+- [Stripe Webhooks](https://docs.stripe.com/webhooks)
