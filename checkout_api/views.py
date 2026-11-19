@@ -106,7 +106,6 @@ class StripeWebhookView(generics.CreateAPIView):
                     payload, sig_header, stripe_webhook_secret
                 )
             except stripe.error.SignatureVerificationError as e:
-                print(str(e))
                 return Response({'msg': 'Webhook signature verification failed.'}, status=status.HTTP_401_UNAUTHORIZED)
         else:
             return Response({'msg': 'Webhook secret missing.'}, status=status.HTTP_401_UNAUTHORIZED)
