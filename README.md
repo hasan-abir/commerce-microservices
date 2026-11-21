@@ -47,6 +47,8 @@ Add `sudo` beforehand if permission is required
 
 Go to `http://localhost:8000` and you'll find the app running!
 
+[![On Video](https://raw.githubusercontent.com/hasan-abir/commerce-microservices/main/project_demo.mp4)]
+
 ## Test with Docker too
 
 While the server is running, in another terminal, run `docker compose exec api python manage.py test checkout_api.tests`
